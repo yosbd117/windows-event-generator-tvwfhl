@@ -1,0 +1,319 @@
+{
+  "applicationEventTemplates": [
+    {
+      "name": "applicationStartup",
+      "description": "Application successfully started and initialized",
+      "channel": "Application",
+      "eventId": 1000,
+      "level": 4,
+      "source": "Application",
+      "category": "Lifecycle",
+      "version": "1.0.0",
+      "parameters": [
+        {
+          "name": "applicationName",
+          "type": "string",
+          "description": "Name of the application that started",
+          "required": true,
+          "validation": {
+            "minLength": 1,
+            "maxLength": 256
+          }
+        },
+        {
+          "name": "version",
+          "type": "string",
+          "description": "Version of the application",
+          "required": true,
+          "validation": {
+            "pattern": "^\\d+\\.\\d+\\.\\d+(\\.\\d+)?$"
+          }
+        },
+        {
+          "name": "processId",
+          "type": "int",
+          "description": "Process ID of the application",
+          "required": true,
+          "validation": {
+            "minimum": 1
+          }
+        }
+      ]
+    },
+    {
+      "name": "applicationShutdown",
+      "description": "Application gracefully shut down",
+      "channel": "Application",
+      "eventId": 1001,
+      "level": 4,
+      "source": "Application",
+      "category": "Lifecycle",
+      "version": "1.0.0",
+      "parameters": [
+        {
+          "name": "applicationName",
+          "type": "string",
+          "description": "Name of the application that shut down",
+          "required": true,
+          "validation": {
+            "minLength": 1,
+            "maxLength": 256
+          }
+        },
+        {
+          "name": "exitCode",
+          "type": "int",
+          "description": "Exit code of the application",
+          "required": true
+        },
+        {
+          "name": "shutdownReason",
+          "type": "string",
+          "description": "Reason for shutdown",
+          "required": false,
+          "defaultValue": "Normal shutdown"
+        }
+      ]
+    },
+    {
+      "name": "applicationError",
+      "description": "Application encountered an error during execution",
+      "channel": "Application",
+      "eventId": 1002,
+      "level": 2,
+      "source": "Application",
+      "category": "Error",
+      "version": "1.0.0",
+      "parameters": [
+        {
+          "name": "applicationName",
+          "type": "string",
+          "description": "Name of the application that encountered the error",
+          "required": true,
+          "validation": {
+            "minLength": 1,
+            "maxLength": 256
+          }
+        },
+        {
+          "name": "errorCode",
+          "type": "string",
+          "description": "Error code or identifier",
+          "required": true
+        },
+        {
+          "name": "errorMessage",
+          "type": "string",
+          "description": "Detailed error message",
+          "required": true,
+          "validation": {
+            "maxLength": 32768
+          }
+        },
+        {
+          "name": "stackTrace",
+          "type": "string",
+          "description": "Stack trace of the error",
+          "required": false
+        }
+      ]
+    },
+    {
+      "name": "applicationCrash",
+      "description": "Application terminated unexpectedly",
+      "channel": "Application",
+      "eventId": 1003,
+      "level": 1,
+      "source": "Application",
+      "category": "Error",
+      "version": "1.0.0",
+      "parameters": [
+        {
+          "name": "applicationName",
+          "type": "string",
+          "description": "Name of the crashed application",
+          "required": true,
+          "validation": {
+            "minLength": 1,
+            "maxLength": 256
+          }
+        },
+        {
+          "name": "faultModule",
+          "type": "string",
+          "description": "Module that caused the crash",
+          "required": true
+        },
+        {
+          "name": "exceptionCode",
+          "type": "string",
+          "description": "Exception code of the crash",
+          "required": true
+        },
+        {
+          "name": "faultOffset",
+          "type": "string",
+          "description": "Offset where the fault occurred",
+          "required": true
+        }
+      ]
+    },
+    {
+      "name": "databaseConnection",
+      "description": "Database connection status change",
+      "channel": "Application",
+      "eventId": 1004,
+      "level": 4,
+      "source": "Application",
+      "category": "Database",
+      "version": "1.0.0",
+      "parameters": [
+        {
+          "name": "serverName",
+          "type": "string",
+          "description": "Database server name",
+          "required": true
+        },
+        {
+          "name": "databaseName",
+          "type": "string",
+          "description": "Name of the database",
+          "required": true
+        },
+        {
+          "name": "connectionStatus",
+          "type": "string",
+          "description": "Status of the connection",
+          "required": true,
+          "validation": {
+            "pattern": "^(Connected|Disconnected|Failed)$"
+          }
+        }
+      ]
+    },
+    {
+      "name": "serviceStart",
+      "description": "Windows service started successfully",
+      "channel": "Application",
+      "eventId": 1005,
+      "level": 4,
+      "source": "Application",
+      "category": "Service",
+      "version": "1.0.0",
+      "parameters": [
+        {
+          "name": "serviceName",
+          "type": "string",
+          "description": "Name of the service",
+          "required": true
+        },
+        {
+          "name": "accountName",
+          "type": "string",
+          "description": "Account under which the service is running",
+          "required": true
+        }
+      ]
+    },
+    {
+      "name": "serviceStop",
+      "description": "Windows service stopped",
+      "channel": "Application",
+      "eventId": 1006,
+      "level": 4,
+      "source": "Application",
+      "category": "Service",
+      "version": "1.0.0",
+      "parameters": [
+        {
+          "name": "serviceName",
+          "type": "string",
+          "description": "Name of the service",
+          "required": true
+        },
+        {
+          "name": "stopReason",
+          "type": "string",
+          "description": "Reason for service stop",
+          "required": false,
+          "defaultValue": "Normal shutdown"
+        }
+      ]
+    },
+    {
+      "name": "configurationChange",
+      "description": "Application configuration changed",
+      "channel": "Application",
+      "eventId": 1007,
+      "level": 4,
+      "source": "Application",
+      "category": "Configuration",
+      "version": "1.0.0",
+      "parameters": [
+        {
+          "name": "configComponent",
+          "type": "string",
+          "description": "Component whose configuration changed",
+          "required": true
+        },
+        {
+          "name": "oldValue",
+          "type": "string",
+          "description": "Previous configuration value",
+          "required": false
+        },
+        {
+          "name": "newValue",
+          "type": "string",
+          "description": "New configuration value",
+          "required": true
+        },
+        {
+          "name": "changedBy",
+          "type": "string",
+          "description": "User who made the change",
+          "required": true
+        }
+      ]
+    },
+    {
+      "name": "performanceAlert",
+      "description": "Application performance threshold exceeded",
+      "channel": "Application",
+      "eventId": 1008,
+      "level": 3,
+      "source": "Application",
+      "category": "Performance",
+      "version": "1.0.0",
+      "parameters": [
+        {
+          "name": "metricName",
+          "type": "string",
+          "description": "Name of the performance metric",
+          "required": true
+        },
+        {
+          "name": "currentValue",
+          "type": "string",
+          "description": "Current value of the metric",
+          "required": true
+        },
+        {
+          "name": "threshold",
+          "type": "string",
+          "description": "Threshold that was exceeded",
+          "required": true
+        },
+        {
+          "name": "duration",
+          "type": "int",
+          "description": "Duration in seconds the threshold was exceeded",
+          "required": true,
+          "validation": {
+            "minimum": 0
+          }
+        }
+      ]
+    }
+  ]
+}
