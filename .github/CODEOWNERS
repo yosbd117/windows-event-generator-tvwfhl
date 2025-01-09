@@ -1,0 +1,33 @@
+*                                               @project-leads
+
+# Core event simulation engine - requires core and security review
+src/windows/EventSimulator.Core/**              @core-team @security-team
+
+# Common utilities and shared components
+src/windows/EventSimulator.Common/**            @core-team
+
+# Data access layer - requires database and security expertise
+src/windows/EventSimulator.Data/**              @data-team @security-team
+
+# User interface components
+src/windows/EventSimulator.UI/**                @ui-team
+
+# Test suites and testing infrastructure
+src/windows/EventSimulator.Tests/**             @qa-team
+
+# CI/CD workflows - requires DevOps and security review
+.github/workflows/**                            @devops-team @security-team
+
+# Infrastructure and deployment configurations
+infrastructure/**                               @devops-team @security-team
+
+# Event templates and scenarios - requires security expertise
+src/windows/templates/**                        @security-team
+
+# Documentation files
+*.md                                           @docs-team
+
+# Security-critical paths requiring mandatory security review
+src/windows/EventSimulator.Core/Security/**     @security-team
+src/windows/EventSimulator.Common/Security/**   @security-team
+infrastructure/kubernetes/secrets.yaml          @security-team @devops-team
