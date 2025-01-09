@@ -1,0 +1,213 @@
+{
+  "scenarios": [
+    {
+      "id": "5f9d7a3e-762c-4c3f-b8c4-9f2d3b5e8f1a",
+      "name": "Credential Access and Privilege Escalation",
+      "description": "Simulates a brute force attack followed by successful logon and privilege escalation",
+      "mitreAttackTechnique": "T1110.001",
+      "tacticCategory": "Credential Access",
+      "severity": "High",
+      "events": [
+        {
+          "sequence": 1,
+          "templateId": 1001,
+          "delay": 0,
+          "parameters": [
+            {
+              "name": "TargetUserName",
+              "value": "Administrator",
+              "type": "string",
+              "description": "Target account for brute force attempt",
+              "validation": "^[a-zA-Z0-9_-]{3,20}$"
+            },
+            {
+              "name": "WorkstationName",
+              "value": "WORKSTATION01",
+              "type": "string",
+              "description": "Source workstation name",
+              "validation": "^[a-zA-Z0-9-]{1,15}$"
+            }
+          ],
+          "conditions": []
+        },
+        {
+          "sequence": 2,
+          "templateId": 1002,
+          "delay": 1000,
+          "parameters": [
+            {
+              "name": "EventID",
+              "value": "4625",
+              "type": "int",
+              "description": "Failed logon attempt",
+              "validation": "^4625$"
+            }
+          ],
+          "conditions": [
+            {
+              "type": "Success",
+              "dependsOn": 1,
+              "evaluation": "result.status == 'completed'",
+              "timeout": 5000,
+              "retryCount": 3,
+              "failureAction": "Abort"
+            }
+          ]
+        },
+        {
+          "sequence": 3,
+          "templateId": 1003,
+          "delay": 2000,
+          "parameters": [
+            {
+              "name": "EventID",
+              "value": "4624",
+              "type": "int",
+              "description": "Successful logon",
+              "validation": "^4624$"
+            }
+          ],
+          "conditions": [
+            {
+              "type": "Success",
+              "dependsOn": 2,
+              "evaluation": "result.status == 'completed'",
+              "timeout": 5000,
+              "retryCount": 1,
+              "failureAction": "Abort"
+            }
+          ]
+        },
+        {
+          "sequence": 4,
+          "templateId": 1004,
+          "delay": 3000,
+          "parameters": [
+            {
+              "name": "EventID",
+              "value": "4672",
+              "type": "int",
+              "description": "Special privileges assigned",
+              "validation": "^4672$"
+            }
+          ],
+          "conditions": [
+            {
+              "type": "Success",
+              "dependsOn": 3,
+              "evaluation": "result.status == 'completed'",
+              "timeout": 5000,
+              "retryCount": 1,
+              "failureAction": "Skip"
+            }
+          ]
+        }
+      ],
+      "version": "1.0.0",
+      "created": "2024-01-20T00:00:00Z",
+      "modified": "2024-01-20T00:00:00Z",
+      "tags": [
+        "credential-access",
+        "privilege-escalation",
+        "brute-force"
+      ],
+      "references": [
+        {
+          "url": "https://attack.mitre.org/techniques/T1110/001/",
+          "description": "Password Guessing",
+          "techniqueDetails": "Adversaries may use password guessing to attempt access to accounts when password policies are unknown or when password reuse is likely.",
+          "implementationNotes": "Generates a sequence of failed logon attempts followed by a successful logon and privilege escalation"
+        }
+      ],
+      "performance": {
+        "expectedDuration": 11000,
+        "resourceImpact": "Medium",
+        "concurrencySupport": true
+      }
+    },
+    {
+      "id": "7a1b3c4d-5e6f-7g8h-9i0j-1k2l3m4n5o6p",
+      "name": "Process Creation and Command Execution",
+      "description": "Simulates suspicious process creation and command execution patterns",
+      "mitreAttackTechnique": "T1059.003",
+      "tacticCategory": "Execution",
+      "severity": "Medium",
+      "events": [
+        {
+          "sequence": 1,
+          "templateId": 2001,
+          "delay": 0,
+          "parameters": [
+            {
+              "name": "EventID",
+              "value": "4688",
+              "type": "int",
+              "description": "Process creation event",
+              "validation": "^4688$"
+            },
+            {
+              "name": "NewProcessName",
+              "value": "cmd.exe",
+              "type": "string",
+              "description": "Command prompt execution",
+              "validation": "^[a-zA-Z0-9_.\\-]+\\.exe$"
+            }
+          ],
+          "conditions": []
+        },
+        {
+          "sequence": 2,
+          "templateId": 2002,
+          "delay": 1000,
+          "parameters": [
+            {
+              "name": "EventID",
+              "value": "4688",
+              "type": "int",
+              "description": "Process creation event",
+              "validation": "^4688$"
+            },
+            {
+              "name": "ParentProcessName",
+              "value": "cmd.exe",
+              "type": "string",
+              "description": "Parent process name",
+              "validation": "^[a-zA-Z0-9_.\\-]+\\.exe$"
+            }
+          ],
+          "conditions": [
+            {
+              "type": "Success",
+              "dependsOn": 1,
+              "evaluation": "result.status == 'completed'",
+              "timeout": 5000,
+              "retryCount": 2,
+              "failureAction": "Abort"
+            }
+          ]
+        }
+      ],
+      "version": "1.0.0",
+      "created": "2024-01-20T00:00:00Z",
+      "modified": "2024-01-20T00:00:00Z",
+      "tags": [
+        "execution",
+        "process-creation",
+        "command-line"
+      ],
+      "references": [
+        {
+          "url": "https://attack.mitre.org/techniques/T1059/003/",
+          "description": "Windows Command Shell",
+          "techniqueDetails": "Adversaries may abuse command shells to execute commands, scripts, or binaries.",
+          "implementationNotes": "Generates process creation events showing command shell usage patterns"
+        }
+      ],
+      "performance": {
+        "expectedDuration": 6000,
+        "resourceImpact": "Low",
+        "concurrencySupport": true
+      }
+    }
+  ]
+}
