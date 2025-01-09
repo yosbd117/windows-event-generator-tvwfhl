@@ -1,0 +1,74 @@
+name: CodeQL Analysis
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  schedule:
+    - cron: '0 0 * * 0'  # Run weekly at midnight on Sunday
+
+permissions:
+  security-events: write
+  actions: read
+  contents: read
+
+jobs:
+  analyze:
+    name: CodeQL Analysis
+    runs-on: windows-latest
+    timeout-minutes: 360
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        language: ['csharp']
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          languages: ${{ matrix.language }}
+          queries: security-extended
+          config-file: ./.github/codeql/codeql-config.yml
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '6.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore ${{ env.SOLUTION_PATH }}
+        env:
+          SOLUTION_PATH: src/windows/EventSimulator.sln
+
+      - name: Build solution
+        run: |
+          dotnet build ${{ env.SOLUTION_PATH }} --configuration Release --no-restore
+        env:
+          SOLUTION_PATH: src/windows/EventSimulator.sln
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2
+        with:
+          category: security-extended
+          upload: true
+          output: sarif-results
+          ram: 8192
+          threads: 4
+          add-snippets: true
+
+      - name: Upload SARIF results
+        uses: github/codeql-action/upload-sarif@v2
+        if: success() || failure()
+        with:
+          sarif_file: sarif-results
+          category: security-analysis
+          wait-for-processing: true
+
+env:
+  DOTNET_VERSION: '6.0.x'
+  SOLUTION_PATH: src/windows/EventSimulator.sln
