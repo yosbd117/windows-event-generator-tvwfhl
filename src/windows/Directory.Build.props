@@ -1,0 +1,87 @@
+<Project>
+  <!-- Common Properties -->
+  <PropertyGroup>
+    <TargetFramework>net6.0-windows</TargetFramework>
+    <LangVersion>10.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Platforms>x64</Platforms>
+    <RuntimeIdentifier>win10-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+    
+    <!-- Build Configuration -->
+    <DebugType>portable</DebugType>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarningLevel>4</WarningLevel>
+    
+    <!-- Package Metadata -->
+    <Authors>Windows Event Simulator Team</Authors>
+    <Company>Windows Event Simulator Project</Company>
+    <Product>Windows Event Simulator</Product>
+    <Copyright>© 2024 Windows Event Simulator Project</Copyright>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <Version>1.0.0</Version>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+    
+    <!-- Source Control -->
+    <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>https://github.com/org/windows-event-simulator</RepositoryUrl>
+    
+    <!-- Documentation -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>1591</NoWarn>
+    
+    <!-- Code Analysis -->
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <AnalysisLevel>latest</AnalysisLevel>
+    <AnalysisMode>AllEnabledByDefault</AnalysisMode>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <CodeAnalysisTreatWarningsAsErrors>true</CodeAnalysisTreatWarningsAsErrors>
+    <RunAnalyzersDuringBuild>true</RunAnalyzersDuringBuild>
+    <RunAnalyzersDuringLiveAnalysis>true</RunAnalyzersDuringLiveAnalysis>
+    <RunAnalyzersInBuild>true</RunAnalyzersInBuild>
+    
+    <!-- Security Settings -->
+    <Features>strict</Features>
+    <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
+    <HighEntropyVA>true</HighEntropyVA>
+    <EnableUnsafeBinaryFormatterSerialization>false</EnableUnsafeBinaryFormatterSerialization>
+    <EnableUnsafeUTF7Encoding>false</EnableUnsafeUTF7Encoding>
+  </PropertyGroup>
+
+  <!-- Release Configuration -->
+  <PropertyGroup Condition="'$(Configuration)'=='Release'">
+    <Optimize>true</Optimize>
+    <DebugSymbols>false</DebugSymbols>
+    <DebugType>none</DebugType>
+    <PublishReadyToRun>true</PublishReadyToRun>
+    <PublishSingleFile>true</PublishSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+  </PropertyGroup>
+
+  <!-- Test Project Configuration -->
+  <PropertyGroup Condition="'$(IsTestProject)'=='true'">
+    <IsPackable>false</IsPackable>
+    <CollectCoverage>true</CollectCoverage>
+    <CoverletOutputFormat>cobertura</CoverletOutputFormat>
+    <ExcludeByAttribute>GeneratedCodeAttribute</ExcludeByAttribute>
+  </PropertyGroup>
+
+  <!-- NuGet Package Properties -->
+  <PropertyGroup>
+    <IsPackable Condition="'$(IsTestProject)'!='true'">true</IsPackable>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    <PackageProjectUrl>$(RepositoryUrl)</PackageProjectUrl>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+  </PropertyGroup>
+
+  <!-- Compiler Flags -->
+  <PropertyGroup>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+    <ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>error</ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>
+  </PropertyGroup>
+</Project>
