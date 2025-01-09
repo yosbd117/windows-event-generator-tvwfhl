@@ -1,0 +1,154 @@
+version: '3.8'
+
+services:
+  event_generator:
+    image: eventsimulator/event-generator:latest
+    build:
+      context: ../../
+      dockerfile: Dockerfile.eventgenerator
+      args:
+        WINDOWS_VERSION: ltsc2022
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - DOTNET_RUNNING_IN_CONTAINER=true
+      - WINDOWS_AUTH_ENABLED=true
+      - MAX_EVENT_BATCH_SIZE=1000
+      - EVENT_GENERATION_THREADS=4
+    ports:
+      - "80:80"
+    volumes:
+      - template-data:C:/app/templates:ro
+      - event-logs:C:/app/logs:rw
+    depends_on:
+      - template_service
+    deploy:
+      replicas: 2
+      placement:
+        constraints:
+          - node.platform.os == windows
+      resources:
+        limits:
+          cpus: '1'
+          memory: 2GB
+        reservations:
+          cpus: '0.5'
+          memory: 1GB
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+      update_config:
+        parallelism: 1
+        delay: 10s
+        order: start-first
+    healthcheck:
+      test: ["CMD", "powershell", "-Command", "try { $response = Invoke-WebRequest http://localhost/health -UseBasicParsing; if ($response.StatusCode -eq 200) { exit 0 } else { exit 1 }} catch { exit 1 }"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "10"
+    security_opt:
+      - credentialspec=file://C:/ProgramData/Docker/CredentialSpecs/windows-gmsa.json
+
+  template_service:
+    image: eventsimulator/template-service:latest
+    build:
+      context: ../../
+      dockerfile: Dockerfile.templateservice
+      args:
+        WINDOWS_VERSION: ltsc2022
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - DOTNET_RUNNING_IN_CONTAINER=true
+      - WINDOWS_AUTH_ENABLED=true
+    volumes:
+      - template-data:C:/app/templates:rw
+    deploy:
+      replicas: 2
+      placement:
+        constraints:
+          - node.platform.os == windows
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1GB
+        reservations:
+          cpus: '0.25'
+          memory: 512MB
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+    healthcheck:
+      test: ["CMD", "powershell", "-Command", "try { $response = Invoke-WebRequest http://localhost/health -UseBasicParsing; if ($response.StatusCode -eq 200) { exit 0 } else { exit 1 }} catch { exit 1 }"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    security_opt:
+      - credentialspec=file://C:/ProgramData/Docker/CredentialSpecs/windows-gmsa.json
+
+  monitoring_service:
+    image: eventsimulator/monitoring-service:latest
+    build:
+      context: ../../
+      dockerfile: Dockerfile.monitoring
+      args:
+        WINDOWS_VERSION: ltsc2022
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - DOTNET_RUNNING_IN_CONTAINER=true
+      - WINDOWS_AUTH_ENABLED=true
+    volumes:
+      - event-logs:C:/app/logs:ro
+    deploy:
+      placement:
+        constraints:
+          - node.platform.os == windows
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 1GB
+        reservations:
+          cpus: '0.25'
+          memory: 512MB
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+    healthcheck:
+      test: ["CMD", "powershell", "-Command", "try { $response = Invoke-WebRequest http://localhost/health -UseBasicParsing; if ($response.StatusCode -eq 200) { exit 0 } else { exit 1 }} catch { exit 1 }"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    security_opt:
+      - credentialspec=file://C:/ProgramData/Docker/CredentialSpecs/windows-gmsa.json
+
+volumes:
+  template-data:
+    driver: local
+    driver_opts:
+      type: ntfs
+      device: C:\ProgramData\EventSimulator\templates
+  event-logs:
+    driver: local
+    driver_opts:
+      type: ntfs
+      device: C:\ProgramData\EventSimulator\logs
+
+networks:
+  default:
+    driver: overlay
+    driver_opts:
+      encrypted: "true"
+    attachable: true
+    internal: true
