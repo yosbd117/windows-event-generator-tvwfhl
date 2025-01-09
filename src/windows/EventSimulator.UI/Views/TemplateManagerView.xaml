@@ -1,0 +1,251 @@
+<UserControl x:Class="EventSimulator.UI.Views.TemplateManagerView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:md="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:controls="clr-namespace:EventSimulator.UI.Controls"
+             xmlns:automation="clr-namespace:System.Windows.Automation;assembly=PresentationFramework"
+             Width="Auto" Height="Auto"
+             automation:AutomationProperties.AutomationId="TemplateManagerView"
+             automation:AutomationProperties.Name="Template Manager"
+             automation:AutomationProperties.HelpText="Interface for managing event templates">
+
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../Resources/Styles.xaml"/>
+                <ResourceDictionary Source="../Resources/Icons.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Toolbar -->
+        <ToolBar Grid.Row="0" Style="{StaticResource ToolbarStyle}">
+            <Button Command="{Binding CreateTemplateCommand}"
+                    Style="{StaticResource PrimaryButtonStyle}"
+                    ToolTip="Create New Template"
+                    automation:AutomationProperties.Name="Create New Template">
+                <StackPanel Orientation="Horizontal">
+                    <Path Data="{StaticResource AddIcon}" Width="16" Height="16" Fill="White"/>
+                    <TextBlock Text="New Template" Margin="8,0,0,0"/>
+                </StackPanel>
+            </Button>
+
+            <Separator/>
+
+            <Button Command="{Binding ImportTemplatesCommand}"
+                    Style="{StaticResource SecondaryButtonStyle}"
+                    ToolTip="Import Templates"
+                    automation:AutomationProperties.Name="Import Templates">
+                <StackPanel Orientation="Horizontal">
+                    <Path Data="{StaticResource ImportIcon}" Width="16" Height="16"/>
+                    <TextBlock Text="Import" Margin="8,0,0,0"/>
+                </StackPanel>
+            </Button>
+
+            <Button Command="{Binding ExportTemplatesCommand}"
+                    Style="{StaticResource SecondaryButtonStyle}"
+                    ToolTip="Export Templates"
+                    automation:AutomationProperties.Name="Export Templates">
+                <StackPanel Orientation="Horizontal">
+                    <Path Data="{StaticResource ExportIcon}" Width="16" Height="16"/>
+                    <TextBlock Text="Export" Margin="8,0,0,0"/>
+                </StackPanel>
+            </Button>
+
+            <Separator/>
+
+            <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                     Width="250"
+                     Style="{StaticResource TextBoxStyle}"
+                     md:HintAssist.Hint="Search templates..."
+                     md:TextFieldAssist.HasClearButton="True"
+                     automation:AutomationProperties.Name="Search Templates"/>
+        </ToolBar>
+
+        <!-- Main Content -->
+        <Grid Grid.Row="1" Margin="16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="2*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Template List -->
+            <DataGrid Grid.Column="0"
+                      ItemsSource="{Binding FilteredTemplates}"
+                      SelectedItem="{Binding SelectedTemplate}"
+                      Style="{StaticResource DataGridStyle}"
+                      AutoGenerateColumns="False"
+                      CanUserAddRows="False"
+                      SelectionMode="Single"
+                      automation:AutomationProperties.Name="Templates List">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Name" 
+                                      Binding="{Binding Name}"
+                                      Width="*"/>
+                    <DataGridTextColumn Header="Event ID" 
+                                      Binding="{Binding EventId}"
+                                      Width="80"/>
+                    <DataGridTextColumn Header="Channel" 
+                                      Binding="{Binding Channel}"
+                                      Width="120"/>
+                    <DataGridTextColumn Header="Version" 
+                                      Binding="{Binding Version}"
+                                      Width="80"/>
+                </DataGrid.Columns>
+            </DataGrid>
+
+            <GridSplitter Grid.Column="1" 
+                         Width="4" 
+                         HorizontalAlignment="Center"
+                         VerticalAlignment="Stretch"
+                         Background="{StaticResource Border.Color}"/>
+
+            <!-- Template Editor -->
+            <ScrollViewer Grid.Column="2" 
+                         VerticalScrollBarVisibility="Auto"
+                         IsEnabled="{Binding IsEditing}">
+                <Grid Margin="16,0,0,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Template Header -->
+                    <TextBox Grid.Row="0"
+                             Text="{Binding SelectedTemplate.Name, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{StaticResource TextBoxStyle}"
+                             md:HintAssist.Hint="Template Name"
+                             Margin="0,0,0,16"
+                             automation:AutomationProperties.Name="Template Name"/>
+
+                    <TextBox Grid.Row="1"
+                             Text="{Binding SelectedTemplate.Description, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{StaticResource TextBoxStyle}"
+                             md:HintAssist.Hint="Description"
+                             TextWrapping="Wrap"
+                             AcceptsReturn="True"
+                             Height="60"
+                             Margin="0,0,0,16"
+                             automation:AutomationProperties.Name="Template Description"/>
+
+                    <!-- Template Properties -->
+                    <Grid Grid.Row="2" Margin="0,0,0,16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <ComboBox Grid.Column="0"
+                                  ItemsSource="{Binding Source={x:Static EventLogChannels}}"
+                                  SelectedValue="{Binding SelectedTemplate.Channel}"
+                                  Style="{StaticResource ComboBoxStyle}"
+                                  md:HintAssist.Hint="Channel"
+                                  Margin="0,0,8,0"
+                                  automation:AutomationProperties.Name="Event Channel"/>
+
+                        <TextBox Grid.Column="1"
+                                 Text="{Binding SelectedTemplate.EventId}"
+                                 Style="{StaticResource TextBoxStyle}"
+                                 md:HintAssist.Hint="Event ID"
+                                 Margin="8,0"
+                                 automation:AutomationProperties.Name="Event ID"/>
+
+                        <ComboBox Grid.Column="2"
+                                  ItemsSource="{Binding Source={x:Static EventLogLevels}}"
+                                  SelectedValue="{Binding SelectedTemplate.Level}"
+                                  Style="{StaticResource ComboBoxStyle}"
+                                  md:HintAssist.Hint="Level"
+                                  Margin="8,0,0,0"
+                                  automation:AutomationProperties.Name="Event Level"/>
+                    </Grid>
+
+                    <!-- MITRE ATT&CK Reference -->
+                    <TextBox Grid.Row="3"
+                             Text="{Binding SelectedTemplate.MitreAttackTechnique, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{StaticResource TextBoxStyle}"
+                             md:HintAssist.Hint="MITRE ATT&CK Technique ID (e.g., T1234.001)"
+                             Margin="0,0,0,16"
+                             automation:AutomationProperties.Name="MITRE ATT&CK Reference"/>
+
+                    <!-- Parameters -->
+                    <ItemsControl Grid.Row="4"
+                                 ItemsSource="{Binding SelectedTemplate.Parameters}"
+                                 Margin="0,0,0,16"
+                                 automation:AutomationProperties.Name="Parameters List">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <controls:EventParameterEditor Parameter="{Binding}"
+                                                             Margin="0,0,0,8"/>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <!-- Action Buttons -->
+                    <StackPanel Grid.Row="5" 
+                              Orientation="Horizontal" 
+                              HorizontalAlignment="Right">
+                        <Button Command="{Binding ValidateTemplateCommand}"
+                                Style="{StaticResource SecondaryButtonStyle}"
+                                Margin="0,0,8,0"
+                                automation:AutomationProperties.Name="Validate Template">
+                            <TextBlock Text="Validate"/>
+                        </Button>
+                        <Button Command="{Binding SaveTemplateCommand}"
+                                Style="{StaticResource PrimaryButtonStyle}"
+                                Margin="0,0,8,0"
+                                automation:AutomationProperties.Name="Save Template">
+                            <TextBlock Text="Save"/>
+                        </Button>
+                        <Button Command="{Binding CancelEditCommand}"
+                                Style="{StaticResource SecondaryButtonStyle}"
+                                automation:AutomationProperties.Name="Cancel Edit">
+                            <TextBlock Text="Cancel"/>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </ScrollViewer>
+        </Grid>
+
+        <!-- Status Bar -->
+        <StatusBar Grid.Row="2" Style="{StaticResource StatusBarStyle}">
+            <TextBlock Text="{Binding StatusMessage}"
+                       Margin="8,0"
+                       automation:AutomationProperties.Name="Status Message"/>
+            <Separator/>
+            <ItemsControl ItemsSource="{Binding ValidationErrors}"
+                         Visibility="{Binding HasValidationErrors, Converter={StaticResource BooleanToVisibilityConverter}}"
+                         automation:AutomationProperties.Name="Validation Errors">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding}"
+                                 Foreground="{StaticResource ErrorBrush}"
+                                 Margin="8,0"/>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </StatusBar>
+
+        <!-- Busy Indicator -->
+        <md:Card Grid.Row="0" Grid.RowSpan="3"
+                 Background="#80000000"
+                 Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <ProgressBar Style="{StaticResource MaterialDesignCircularProgressBar}"
+                        Value="0"
+                        IsIndeterminate="True"
+                        automation:AutomationProperties.Name="Loading Indicator"/>
+        </md:Card>
+    </Grid>
+</UserControl>
