@@ -1,0 +1,169 @@
+<UserControl 
+    x:Class="EventSimulator.UI.Views.LogViewerView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:md="http://materialdesigninxaml.net/winfx/xaml/themes"
+    xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors"
+    xmlns:converters="clr-namespace:EventSimulator.UI.Converters"
+    x:Name="LogViewerControl"
+    AutomationProperties.AutomationId="LogViewerView"
+    AutomationProperties.Name="Event Log Viewer"
+    AutomationProperties.HelpText="Displays and filters Windows Event Log entries">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Toolbar with search and filters -->
+        <ToolBar Grid.Row="0" Style="{StaticResource ToolbarStyle}">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBox 
+                    Width="300"
+                    Margin="0,0,8,0"
+                    Style="{StaticResource TextBoxStyle}"
+                    md:HintAssist.Hint="Search events..."
+                    Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                    AutomationProperties.Name="Search Events"
+                    AutomationProperties.HelpText="Enter search terms or filter expressions">
+                    <TextBox.InputBindings>
+                        <KeyBinding Key="Enter" Command="{Binding FilterEventsCommand}"/>
+                    </TextBox.InputBindings>
+                </TextBox>
+
+                <ComboBox 
+                    Width="200"
+                    Margin="0,0,8,0"
+                    Style="{StaticResource ComboBoxStyle}"
+                    ItemsSource="{Binding FilterPresets}"
+                    md:HintAssist.Hint="Filter presets"
+                    AutomationProperties.Name="Filter Presets">
+                </ComboBox>
+
+                <Button 
+                    Command="{Binding RefreshEventsCommand}"
+                    Style="{StaticResource PrimaryButtonStyle}"
+                    ToolTip="Refresh Events"
+                    AutomationProperties.Name="Refresh Events">
+                    <StackPanel Orientation="Horizontal">
+                        <Path Data="{StaticResource SearchIcon}" 
+                              Fill="{StaticResource IconBrush.Light}"
+                              Width="16" Height="16"/>
+                        <TextBlock Text="Refresh" Margin="8,0,0,0"/>
+                    </StackPanel>
+                </Button>
+
+                <Button 
+                    Margin="8,0,0,0"
+                    Command="{Binding ClearFiltersCommand}"
+                    Style="{StaticResource SecondaryButtonStyle}"
+                    ToolTip="Clear Filters"
+                    AutomationProperties.Name="Clear Filters">
+                    <TextBlock Text="Clear Filters"/>
+                </Button>
+            </StackPanel>
+        </ToolBar>
+
+        <!-- Events DataGrid with virtualization -->
+        <DataGrid 
+            Grid.Row="1"
+            Style="{StaticResource DataGridStyle}"
+            ItemsSource="{Binding Events}"
+            SelectedItem="{Binding SelectedEvent}"
+            AutomationProperties.Name="Events List"
+            VirtualizingStackPanel.IsVirtualizing="True"
+            VirtualizingStackPanel.VirtualizationMode="Recycling"
+            ScrollViewer.IsDeferredScrollingEnabled="True"
+            EnableRowVirtualization="True"
+            EnableColumnVirtualization="True">
+            
+            <DataGrid.Columns>
+                <DataGridTextColumn 
+                    Header="Time" 
+                    Binding="{Binding Timestamp}"
+                    Width="Auto"
+                    SortDirection="Descending"/>
+                <DataGridTextColumn 
+                    Header="ID" 
+                    Binding="{Binding EventId}"
+                    Width="SizeToHeader"/>
+                <DataGridTextColumn 
+                    Header="Source" 
+                    Binding="{Binding Source}"
+                    Width="Auto"/>
+                <DataGridTextColumn 
+                    Header="Level" 
+                    Binding="{Binding Level}"
+                    Width="SizeToHeader"/>
+                <DataGridTextColumn 
+                    Header="Message" 
+                    Binding="{Binding Message}"
+                    Width="*"/>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <!-- Event Details Panel -->
+        <Expander 
+            Grid.Row="2"
+            Header="Event Details"
+            IsExpanded="{Binding ShowExtendedData}"
+            AutomationProperties.Name="Event Details Section">
+            <Grid Margin="8">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Event Properties -->
+                <Grid Grid.Row="0" Margin="0,0,0,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Column="0" Grid.Row="0" Text="Event ID:" Margin="0,0,8,4"/>
+                    <TextBlock Grid.Column="1" Grid.Row="0" Text="{Binding SelectedEvent.EventId}" Margin="0,0,16,4"/>
+                    <TextBlock Grid.Column="2" Grid.Row="0" Text="Source:" Margin="0,0,8,4"/>
+                    <TextBlock Grid.Column="3" Grid.Row="0" Text="{Binding SelectedEvent.Source}" Margin="0,0,0,4"/>
+
+                    <TextBlock Grid.Column="0" Grid.Row="1" Text="Channel:" Margin="0,0,8,0"/>
+                    <TextBlock Grid.Column="1" Grid.Row="1" Text="{Binding SelectedEvent.Channel}" Margin="0,0,16,0"/>
+                    <TextBlock Grid.Column="2" Grid.Row="1" Text="Status:" Margin="0,0,8,0"/>
+                    <TextBlock Grid.Column="3" Grid.Row="1" Text="{Binding SelectedEvent.Status}"/>
+                </Grid>
+
+                <!-- Event XML -->
+                <TextBox 
+                    Grid.Row="1"
+                    Style="{StaticResource TextBoxStyle}"
+                    Text="{Binding SelectedEvent.GeneratedXml, Mode=OneWay}"
+                    IsReadOnly="True"
+                    TextWrapping="Wrap"
+                    VerticalScrollBarVisibility="Auto"
+                    Height="200"
+                    FontFamily="Consolas"
+                    AutomationProperties.Name="Event XML Data"/>
+            </Grid>
+        </Expander>
+
+        <!-- Loading Overlay -->
+        <md:Card 
+            Grid.Row="0" Grid.RowSpan="3"
+            Background="#80000000"
+            Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <ProgressBar 
+                Style="{StaticResource MaterialDesignCircularProgressBar}"
+                Value="0"
+                IsIndeterminate="True"
+                Width="48" Height="48"/>
+        </md:Card>
+    </Grid>
+</UserControl>
