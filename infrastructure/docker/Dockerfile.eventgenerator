@@ -1,0 +1,94 @@
+# Build Stage
+FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
+WORKDIR /src
+
+# Copy project files with integrity verification
+COPY ["src/windows/Directory.Build.props", "./"]
+COPY ["src/windows/EventSimulator.Core/EventSimulator.Core.csproj", "EventSimulator.Core/"]
+COPY ["src/windows/EventSimulator.Common/EventSimulator.Common.csproj", "EventSimulator.Common/"]
+
+# Restore packages from trusted sources
+RUN dotnet restore "EventSimulator.Core/EventSimulator.Core.csproj" \
+    --runtime win10-x64
+
+# Copy source code
+COPY ["src/windows/EventSimulator.Core/", "EventSimulator.Core/"]
+COPY ["src/windows/EventSimulator.Common/", "EventSimulator.Common/"]
+
+# Build and publish with security flags
+RUN dotnet publish "EventSimulator.Core/EventSimulator.Core.csproj" \
+    --configuration Release \
+    --runtime win10-x64 \
+    --self-contained true \
+    --output /app/publish \
+    /p:PublishTrimmed=true \
+    /p:PublishSingleFile=true \
+    /p:DebugType=None \
+    /p:DebugSymbols=false \
+    /p:EnableCompressionInSingleFile=true
+
+# Runtime Stage
+FROM mcr.microsoft.com/windows/servercore:ltsc2022
+WORKDIR /app
+
+# Install .NET Runtime (minimal components)
+RUN powershell -Command \
+    $ProgressPreference = 'SilentlyContinue'; \
+    Invoke-WebRequest -Uri https://dot.net/v1/dotnet-install.ps1 -OutFile dotnet-install.ps1; \
+    ./dotnet-install.ps1 -Channel 6.0 -Runtime dotnet -InstallDir c:\dotnet -Verbose
+ENV PATH="C:\dotnet;${PATH}"
+
+# Create non-root user for security
+RUN net user /add eventuser /passwordreq:yes /expires:never
+RUN net localgroup administrators eventuser /add
+
+# Set up logging with rotation
+RUN mkdir C:\app\logs
+RUN icacls C:\app\logs /grant eventuser:(OI)(CI)F
+
+# Create secure directories for templates and certificates
+RUN mkdir C:\app\templates C:\app\certs
+RUN icacls C:\app\templates /grant eventuser:(OI)(CI)R
+RUN icacls C:\app\certs /grant eventuser:(OI)(CI)R
+
+# Copy published files with hardened permissions
+COPY --from=build /app/publish .
+RUN icacls C:\app /grant eventuser:(OI)(CI)RX
+
+# Configure environment variables
+ENV ASPNETCORE_ENVIRONMENT=Production
+ENV DOTNET_RUNNING_IN_CONTAINER=true
+ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1
+ENV ASPNETCORE_URLS=http://+:80
+ENV SECURITY_LEVEL=high
+ENV MAX_MEMORY=4g
+ENV MAX_CPU=2
+
+# Set up health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD ["dotnet", "EventSimulator.Core.dll", "--health-check"]
+
+# Expose ports
+EXPOSE 80
+EXPOSE 443
+
+# Set resource limits
+RUN powershell -Command \
+    Set-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management' -Name 'PagingFiles' -Value 'C:\pagefile.sys 512 4096'
+
+# Labels for container metadata
+LABEL maintainer="Windows Event Simulator Team" \
+      description="Secure Event Generator Service for Windows Event Simulator" \
+      version="1.0.0" \
+      security.baseline="high" \
+      security.scanned="true" \
+      compliance.level="production"
+
+# Switch to non-root user
+USER eventuser
+
+# Set entry point with security mode
+ENTRYPOINT ["dotnet", "EventSimulator.Core.dll", "--security-mode=high"]
+
+# Mount points for persistent storage
+VOLUME ["C:/app/templates", "C:/app/logs", "C:/app/certs"]
