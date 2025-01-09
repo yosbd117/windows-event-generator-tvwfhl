@@ -1,0 +1,101 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: monitoring-service
+  namespace: event-simulator
+  labels:
+    app: windows-event-simulator
+    component: monitoring
+    version: 1.0.0
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8080"
+    prometheus.io/path: "/metrics"
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: windows-event-simulator
+      component: monitoring
+  template:
+    metadata:
+      labels:
+        app: windows-event-simulator
+        component: monitoring
+    spec:
+      containers:
+      - name: monitoring-service
+        image: mcr.microsoft.com/windows/servercore:ltsc2022
+        ports:
+        - containerPort: 8080
+          name: metrics
+          protocol: TCP
+        - containerPort: 8081
+          name: health
+          protocol: TCP
+        resources:
+          limits:
+            cpu: "1"
+            memory: 2Gi
+          requests:
+            cpu: 500m
+            memory: 1Gi
+        volumeMounts:
+        - name: logs
+          mountPath: /app/logs
+        - name: metrics
+          mountPath: /app/metrics
+        - name: tls-cert
+          mountPath: /app/certs
+          readOnly: true
+        envFrom:
+        - configMapRef:
+            name: logging-config
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8081
+            scheme: HTTPS
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8081
+            scheme: HTTPS
+          initialDelaySeconds: 15
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 2
+        securityContext:
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+      volumes:
+      - name: logs
+        persistentVolumeClaim:
+          claimName: monitoring-logs-pvc
+      - name: metrics
+        persistentVolumeClaim:
+          claimName: monitoring-metrics-pvc
+      - name: tls-cert
+        secret:
+          secretName: tls-certificate
+      nodeSelector:
+        kubernetes.io/os: windows
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app: windows-event-simulator
+                  component: monitoring
+              topologyKey: kubernetes.io/hostname
