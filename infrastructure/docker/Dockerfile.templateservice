@@ -1,0 +1,90 @@
+# Build stage
+FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
+WORKDIR /src
+
+# Install and run Trivy scanner
+FROM aquasec/trivy:latest as trivy
+WORKDIR /scan
+COPY --from=build /src .
+RUN trivy filesystem --severity HIGH,CRITICAL --exit-code 1 .
+
+# Build application
+FROM build AS publish
+WORKDIR /src
+
+# Copy project files
+COPY ["src/windows/Directory.Build.props", "src/windows/"]
+COPY ["src/windows/EventSimulator.Common/EventSimulator.Common.csproj", "src/windows/EventSimulator.Common/"]
+COPY ["src/windows/EventSimulator.Core/EventSimulator.Core.csproj", "src/windows/EventSimulator.Core/"]
+COPY . .
+
+# Restore packages with security verification
+RUN dotnet restore "src/windows/EventSimulator.Core/EventSimulator.Core.csproj" \
+    --runtime win10-x64 \
+    /p:Configuration=Release \
+    /p:Platform=x64 \
+    /p:RestoreLockedMode=true
+
+# Build and publish
+RUN dotnet publish "src/windows/EventSimulator.Core/EventSimulator.Core.csproj" \
+    --runtime win10-x64 \
+    --self-contained true \
+    -c Release \
+    -o /app/publish \
+    /p:UseAppHost=true \
+    /p:PublishReadyToRun=true \
+    /p:PublishSingleFile=true \
+    /p:DebugType=None \
+    /p:DebugSymbols=false
+
+# Runtime stage
+FROM mcr.microsoft.com/dotnet/aspnet:6.0-windowsservercore-ltsc2022 AS final
+WORKDIR /app
+
+# Configure security settings
+USER ContainerAdministrator
+RUN setx /M ASPNETCORE_ENVIRONMENT "Production" && \
+    setx /M DOTNET_RUNNING_IN_CONTAINER "true" && \
+    setx /M ASPNETCORE_URLS "https://+:443;http://+:80" && \
+    setx /M DOTNET_GENERATE_ASPNET_CERTIFICATE "true" && \
+    setx /M TEMPLATE_SERVICE_SECURITY_LEVEL "high" && \
+    setx /M MAX_TEMPLATE_SIZE "5242880"
+
+# Create non-admin user for running the application
+RUN net user /add templateservice && \
+    net localgroup administrators templateservice /delete
+
+# Set up volumes with appropriate permissions
+RUN mkdir C:\app\templates C:\app\certs && \
+    icacls C:\app\templates /grant:r templateservice:(OI)(CI)R && \
+    icacls C:\app\certs /grant:r templateservice:(OI)(CI)R
+
+# Copy published app
+COPY --from=publish /app/publish .
+
+# Set permissions on app files
+RUN icacls C:\app /grant:r templateservice:(OI)(CI)RX
+
+# Switch to non-admin user
+USER templateservice
+
+# Configure health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD powershell -command \
+        try { \
+            $response = Invoke-WebRequest http://localhost/health -UseBasicParsing; \
+            if ($response.StatusCode -eq 200) { exit 0 } exit 1 \
+        } catch { exit 1 }
+
+# Expose ports
+EXPOSE 80 443
+
+# Set resource limits
+ENV DOTNET_MaxRAMPercentage=75
+ENV DOTNET_UseANGLE=1
+
+# Define volumes
+VOLUME ["C:/app/templates", "C:/app/certs"]
+
+# Start the service
+ENTRYPOINT ["dotnet", "EventSimulator.Core.dll"]
