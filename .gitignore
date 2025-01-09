@@ -1,0 +1,98 @@
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+build/
+bld/
+[Ll]og/
+[Ll]ogs/
+
+# Visual Studio files
+.vs/
+*.user
+*.userosscache
+*.suo
+*.userprefs
+*.sln.docstates
+*.dbmdl
+*.dbproj.schemaview
+*.pfx
+*.publishsettings
+
+# Dependencies
+packages/
+node_modules/
+*.nupkg
+project.lock.json
+*.nuget.props
+*.nuget.targets
+
+# Test Results
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+*.VisualState.xml
+TestResults.xml
+coverage.xml
+*.coverage
+coverage/
+*.trx
+
+# Temporary files
+*.swp
+*.*~
+.project.json
+.DS_Store
+Thumbs.db
+*.tmp
+*.temp
+
+# Application specific
+appsettings.*.json
+!appsettings.example.json
+*.log
+EventSimulator.*.log
+*.db
+*.sqlite
+*.sqlite3
+*.cache
+template-cache/
+
+# Security sensitive
+*.key
+*.pem
+*.pfx
+*.p12
+*.cer
+*.crt
+*.der
+secrets.json
+connectionstrings.json
+security.config
+*.[Kk]ey[Ss]tore
+
+# IDE specific
+.idea/
+.vscode/
+*.sln.iml
+*.DotSettings
+*.DotSettings.user
+*.csproj.user
+_ReSharper*/
+*.resharper
+
+# Docker
+.docker/data/
+*.env
+docker-compose.override.yml
+.dockerignore
+
+# Infrastructure
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+terraform.tfstate.backup
+.terraformrc
+terraform.rc
