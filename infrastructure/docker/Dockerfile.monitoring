@@ -1,0 +1,71 @@
+# Base stage with .NET runtime and security configurations
+FROM mcr.microsoft.com/dotnet/aspnet:6.0-windowsservercore-ltsc2022 AS base
+
+# Set secure environment variables
+ENV ASPNETCORE_ENVIRONMENT=Production \
+    LOG_LEVEL=Information \
+    RETENTION_DAYS=90 \
+    METRICS_INTERVAL=30 \
+    HEALTH_CHECK_INTERVAL=30 \
+    MAX_LOG_SIZE=1GB \
+    SECURE_LOGGING=true
+
+# Create non-root user for security
+USER ContainerAdministrator
+RUN net user /add monitoringservice && \
+    net localgroup administrators monitoringservice /add
+USER monitoringservice
+
+# Set working directory
+WORKDIR /app
+
+# Configure security policies
+RUN powershell -Command \
+    $ErrorActionPreference = 'Stop'; \
+    Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope LocalMachine; \
+    New-Item -Path C:\app\logs -ItemType Directory -Force; \
+    New-Item -Path C:\app\metrics -ItemType Directory -Force; \
+    icacls "C:\app\logs" /grant:r "monitoringservice:(OI)(CI)F" /T; \
+    icacls "C:\app\metrics" /grant:r "monitoringservice:(OI)(CI)F" /T
+
+# Build stage for monitoring service
+FROM base AS build
+
+# Copy application files with correct permissions
+COPY --chown=monitoringservice:monitoringservice ["src/windows/EventSimulator.Common", "/app/EventSimulator.Common"]
+
+# Set file permissions
+RUN icacls "C:\app\EventSimulator.Common" /inheritance:r /grant:r "monitoringservice:(OI)(CI)RX"
+
+# Expose ports for monitoring endpoints
+EXPOSE 8080 8081
+
+# Configure volumes for persistent storage
+VOLUME ["C:/app/logs", "C:/app/metrics"]
+
+# Set resource limits
+LABEL com.microsoft.resources.cpu="1" \
+      com.microsoft.resources.memory="2G" \
+      com.microsoft.resources.pids="100" \
+      com.microsoft.resources.io.max.bandwidth="1GB" \
+      com.microsoft.resources.io.max.iops="1000"
+
+# Configure health check with PowerShell
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 --start-period=40s \
+    CMD powershell -command \
+        try { \
+            $response = Invoke-WebRequest http://localhost:8081/health -UseBasicParsing; \
+            if ($response.StatusCode -eq 200) { exit 0 } else { exit 1 } \
+        } catch { exit 1 }
+
+# Set entry point with security context
+ENTRYPOINT ["dotnet", "EventSimulator.Common.dll"]
+
+# Set default command with monitoring parameters
+CMD ["--monitoring", "--metrics-interval=30", "--health-check-interval=30"]
+
+# Add security labels
+LABEL security.windowsevent.simulator.version="1.0.0" \
+      security.windowsevent.simulator.monitoring="enabled" \
+      security.windowsevent.simulator.encryption="enabled" \
+      security.windowsevent.simulator.audit="enabled"
