@@ -1,0 +1,108 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: event-generator
+  namespace: event-simulator
+  labels:
+    app: windows-event-simulator
+    component: event-generator
+    version: 1.0.0
+  annotations:
+    description: "Event Generator service for Windows Event Simulation"
+    kubernetes.io/change-cause: "Initial deployment"
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: windows-event-simulator
+      component: event-generator
+  template:
+    metadata:
+      labels:
+        app: windows-event-simulator
+        component: event-generator
+    spec:
+      nodeSelector:
+        kubernetes.io/os: windows
+      securityContext:
+        windowsOptions:
+          runAsUserName: ContainerUser
+      containers:
+      - name: event-generator
+        image: mcr.microsoft.com/windows/servercore:ltsc2022
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: http
+          containerPort: 80
+          protocol: TCP
+        - name: metrics
+          containerPort: 9090
+          protocol: TCP
+        resources:
+          requests:
+            cpu: "2"
+            memory: "4Gi"
+          limits:
+            cpu: "4"
+            memory: "8Gi"
+        volumeMounts:
+        - name: templates
+          mountPath: /app/templates
+          readOnly: true
+        - name: logs
+          mountPath: /app/logs
+        envFrom:
+        - configMapRef:
+            name: event-simulator-config
+        - configMapRef:
+            name: database-config
+        - configMapRef:
+            name: logging-config
+        env:
+        - name: ASPNETCORE_ENVIRONMENT
+          value: Production
+        - name: SQL_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: database-credentials
+              key: username
+        - name: SQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: database-credentials
+              key: password
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: http
+          initialDelaySeconds: 15
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        startupProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          failureThreshold: 30
+      volumes:
+      - name: templates
+        persistentVolumeClaim:
+          claimName: event-generator-templates-pvc
+      - name: logs
+        persistentVolumeClaim:
+          claimName: event-generator-logs-pvc
