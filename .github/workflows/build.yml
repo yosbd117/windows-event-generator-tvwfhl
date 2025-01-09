@@ -1,0 +1,136 @@
+name: Build and Test
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  DOTNET_VERSION: '6.0.x'
+  BUILD_CONFIGURATION: 'Release'
+  BUILD_PLATFORM: 'x64'
+  SECURITY_SCAN_LEVEL: 'high'
+  TEST_COVERAGE_THRESHOLD: '85'
+
+jobs:
+  build:
+    name: Build and Test
+    runs-on: windows-latest
+    
+    steps:
+    - name: Configure Security Features
+      shell: powershell
+      run: |
+        Set-ProcessMitigation -System -Enable DEP,ASLR,ControlFlowGuard
+        Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process
+
+    - name: Checkout Code
+      uses: actions/checkout@v3
+      with:
+        lfs: true
+        fetch-depth: 0
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+        include-prerelease: false
+
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v2
+      with:
+        languages: csharp
+        queries: security-extended,security-and-quality
+
+    - name: Verify Build Environment
+      shell: powershell
+      run: |
+        ./src/windows/scripts/build.ps1 -Command "Initialize-BuildEnvironment" -CleanBuild
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+    - name: Cache NuGet Packages
+      uses: actions/cache@v3
+      with:
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+        restore-keys: |
+          ${{ runner.os }}-nuget-
+
+    - name: Restore Dependencies
+      shell: powershell
+      run: |
+        ./src/windows/scripts/build.ps1 -Command "Restore-Solution" -CleanCache
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+    - name: Build Solution
+      shell: powershell
+      run: |
+        ./src/windows/scripts/build.ps1 -Command "Build-Solution" `
+          -Configuration ${{ env.BUILD_CONFIGURATION }} `
+          -Platform ${{ env.BUILD_PLATFORM }} `
+          -Parallel
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+    - name: Run Tests
+      shell: powershell
+      run: |
+        ./src/windows/scripts/build.ps1 -Command "Run-Tests" `
+          -CoverageThreshold ${{ env.TEST_COVERAGE_THRESHOLD }}
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v2
+      with:
+        category: "/language:csharp"
+
+    - name: Sign Artifacts
+      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      shell: powershell
+      run: |
+        # Code signing would be implemented here
+        Write-Host "Signing build artifacts..."
+
+    - name: Upload Build Artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: build-artifacts
+        path: |
+          src/windows/artifacts/Release/
+          src/windows/artifacts/coverage/
+          src/windows/scripts/buildreport.xml
+        if-no-files-found: error
+        retention-days: 30
+
+    - name: Upload Test Results
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-results
+        path: |
+          src/windows/artifacts/coverage/coverage.cobertura.xml
+          src/windows/artifacts/TestResults/
+        if-no-files-found: error
+        retention-days: 30
+
+    - name: Upload Security Reports
+      uses: actions/upload-artifact@v3
+      with:
+        name: security-reports
+        path: |
+          src/windows/artifacts/security/
+          ./*.sarif
+        if-no-files-found: warn
+        retention-days: 30
+
+    - name: Notify on Failure
+      if: failure()
+      shell: powershell
+      run: |
+        Write-Host "::error::Build or test failure occurred. Check logs for details."
+        exit 1
+
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+  checks: write
