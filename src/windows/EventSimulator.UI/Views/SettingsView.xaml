@@ -1,0 +1,150 @@
+<UserControl 
+    x:Class="EventSimulator.UI.Views.SettingsView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+    xmlns:sys="clr-namespace:System;assembly=mscorlib"
+    mc:Ignorable="d"
+    d:DesignHeight="600" d:DesignWidth="800"
+    AutomationProperties.Name="Settings Panel"
+    AutomationProperties.AutomationId="SettingsPanel"
+    AutomationProperties.IsDialog="True">
+
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../Resources/Styles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,16">
+            <DockPanel LastChildFill="True">
+                <Path Data="{StaticResource SettingsIcon}" 
+                      Width="24" Height="24" 
+                      Fill="{DynamicResource PrimaryBrush}"
+                      DockPanel.Dock="Left"
+                      Margin="0,0,8,0"/>
+                <TextBlock Text="Settings" 
+                         Style="{StaticResource MaterialDesignHeadline5TextBlock}"
+                         VerticalAlignment="Center"/>
+            </DockPanel>
+            <TextBlock Text="Configure application settings and preferences"
+                     Style="{StaticResource MaterialDesignBody1TextBlock}"
+                     Foreground="{DynamicResource MaterialDesignBodyLight}"/>
+        </StackPanel>
+
+        <!-- Settings Content -->
+        <TabControl Grid.Row="1" 
+                   Style="{StaticResource MaterialDesignNavigatilRailTabControl}"
+                   materialDesign:ColorZoneAssist.Mode="PrimaryLight"
+                   AutomationProperties.Name="Settings Categories">
+
+            <!-- Event Generation Settings -->
+            <TabItem Header="Event Generation" 
+                    AutomationProperties.Name="Event Generation Settings">
+                <StackPanel Margin="16">
+                    <TextBox Style="{StaticResource TextBoxStyle}"
+                             materialDesign:HintAssist.Hint="Maximum Concurrent Events"
+                             Text="{Binding MaxConcurrentEvents, UpdateSourceTrigger=PropertyChanged}"
+                             AutomationProperties.HelpText="Set the maximum number of events that can be generated simultaneously (1-10000)"
+                             Margin="0,8"/>
+
+                    <TextBox Style="{StaticResource TextBoxStyle}"
+                             materialDesign:HintAssist.Hint="Event Generation Batch Size"
+                             Text="{Binding EventGenerationBatchSize, UpdateSourceTrigger=PropertyChanged}"
+                             AutomationProperties.HelpText="Set the number of events to generate in each batch"
+                             Margin="0,8"/>
+                </StackPanel>
+            </TabItem>
+
+            <!-- Performance Settings -->
+            <TabItem Header="Performance" 
+                    AutomationProperties.Name="Performance Settings">
+                <StackPanel Margin="16">
+                    <CheckBox Content="Enable Detailed Logging"
+                              IsChecked="{Binding EnableDetailedLogging}"
+                              Style="{StaticResource MaterialDesignCheckBox}"
+                              AutomationProperties.HelpText="Enable detailed application logging for troubleshooting"
+                              Margin="0,8"/>
+
+                    <CheckBox Content="Enable Performance Monitoring"
+                              IsChecked="{Binding EnablePerformanceMonitoring}"
+                              Style="{StaticResource MaterialDesignCheckBox}"
+                              AutomationProperties.HelpText="Enable performance monitoring and metrics collection"
+                              Margin="0,8"/>
+                </StackPanel>
+            </TabItem>
+
+            <!-- Storage Settings -->
+            <TabItem Header="Storage" 
+                    AutomationProperties.Name="Storage Settings">
+                <Grid Margin="16">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <TextBox Grid.Column="0"
+                             Style="{StaticResource TextBoxStyle}"
+                             materialDesign:HintAssist.Hint="Template Storage Path"
+                             Text="{Binding TemplateStoragePath, UpdateSourceTrigger=PropertyChanged}"
+                             AutomationProperties.HelpText="Set the directory path for storing event templates"
+                             IsReadOnly="True"
+                             Margin="0,8"/>
+
+                    <Button Grid.Column="1"
+                            Style="{StaticResource SecondaryButtonStyle}"
+                            Command="{Binding BrowseTemplatePathCommand}"
+                            ToolTip="Browse for template storage location"
+                            AutomationProperties.Name="Browse Template Path"
+                            Margin="8,8,0,8">
+                        <Path Data="{StaticResource ImportIcon}"
+                              Width="20" Height="20"
+                              Fill="{DynamicResource PrimaryBrush}"/>
+                    </Button>
+                </Grid>
+            </TabItem>
+        </TabControl>
+
+        <!-- Action Buttons -->
+        <StackPanel Grid.Row="2" 
+                    Orientation="Horizontal" 
+                    HorizontalAlignment="Right"
+                    Margin="0,16,0,0">
+            <Button Style="{StaticResource SecondaryButtonStyle}"
+                    Command="{Binding ResetToDefaultCommand}"
+                    Content="Reset to Default"
+                    AutomationProperties.Name="Reset Settings to Default"
+                    Margin="0,0,8,0"/>
+
+            <Button Style="{StaticResource PrimaryButtonStyle}"
+                    Command="{Binding SaveSettingsCommand}"
+                    Content="Save Changes"
+                    AutomationProperties.Name="Save Settings Changes"
+                    IsEnabled="{Binding HasUnsavedChanges}"/>
+        </StackPanel>
+
+        <!-- Loading Overlay -->
+        <Grid Grid.Row="0" Grid.RowSpan="3"
+              Background="{DynamicResource MaterialDesignPaper}"
+              Opacity="0.7"
+              Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <ProgressBar Style="{StaticResource MaterialDesignCircularProgressBar}"
+                         Value="0"
+                         IsIndeterminate="True"
+                         HorizontalAlignment="Center"
+                         VerticalAlignment="Center"/>
+        </Grid>
+    </Grid>
+</UserControl>
