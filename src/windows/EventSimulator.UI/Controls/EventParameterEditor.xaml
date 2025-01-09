@@ -1,0 +1,92 @@
+<UserControl x:Class="EventSimulator.UI.Controls.EventParameterEditor"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:md="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:automation="clr-namespace:System.Windows.Automation;assembly=PresentationCore"
+             x:Name="parameterEditor"
+             Width="Auto" Height="Auto"
+             automation:AutomationProperties.AutomationId="EventParameterEditor"
+             automation:AutomationProperties.Name="Event Parameter Editor"
+             automation:AutomationProperties.HelpText="Edit Windows Event Log parameters with validation">
+
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../Resources/Styles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <Grid Margin="8">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Parameter Name and Required Indicator -->
+        <DockPanel Grid.Row="0" LastChildFill="True" Margin="0,0,0,8">
+            <TextBlock Text="{Binding ElementName=parameterEditor, Path=Parameter.Name}"
+                     Style="{StaticResource MaterialDesignSubtitle1TextBlock}"
+                     VerticalAlignment="Center"
+                     automation:AutomationProperties.Name="Parameter Name"/>
+            <TextBlock Text=" *" Foreground="{StaticResource ErrorBrush}"
+                     Visibility="{Binding ElementName=parameterEditor, Path=Parameter.IsRequired, Converter={StaticResource BooleanToVisibilityConverter}}"
+                     VerticalAlignment="Center"
+                     automation:AutomationProperties.Name="Required Indicator"/>
+        </DockPanel>
+
+        <!-- Parameter Description -->
+        <TextBlock Grid.Row="1" 
+                   Text="{Binding ElementName=parameterEditor, Path=Parameter.Description}"
+                   Style="{StaticResource MaterialDesignBody2TextBlock}"
+                   TextWrapping="Wrap"
+                   Margin="0,0,0,16"
+                   automation:AutomationProperties.Name="Parameter Description"/>
+
+        <!-- Parameter Value Input -->
+        <Grid Grid.Row="2" Margin="0,0,0,8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Value Input Field -->
+            <TextBox Grid.Column="0"
+                     Text="{Binding ElementName=parameterEditor, Path=Parameter.Value, UpdateSourceTrigger=PropertyChanged}"
+                     Style="{StaticResource TextBoxStyle}"
+                     md:HintAssist.Hint="{Binding ElementName=parameterEditor, Path=Parameter.DataType}"
+                     md:TextFieldAssist.HasClearButton="True"
+                     md:ValidationAssist.UsePopup="True"
+                     automation:AutomationProperties.Name="Parameter Value"
+                     automation:AutomationProperties.HelpText="{Binding ElementName=parameterEditor, Path=Parameter.Description}">
+                <TextBox.InputBindings>
+                    <KeyBinding Key="Enter" Command="{x:Static md:TextFieldAssist.ReturnCommand}"/>
+                </TextBox.InputBindings>
+            </TextBox>
+
+            <!-- Data Type Indicator -->
+            <Border Grid.Column="1" 
+                    Margin="8,0,0,0"
+                    Background="{StaticResource PrimaryBrush}"
+                    CornerRadius="4"
+                    Padding="8,4"
+                    VerticalAlignment="Center">
+                <TextBlock Text="{Binding ElementName=parameterEditor, Path=Parameter.DataType}"
+                         Foreground="White"
+                         automation:AutomationProperties.Name="Data Type"/>
+            </Border>
+        </Grid>
+
+        <!-- Validation Message -->
+        <TextBlock Grid.Row="3"
+                   Text="{Binding ElementName=parameterEditor, Path=ValidationMessage}"
+                   Style="{StaticResource MaterialDesignCaptionTextBlock}"
+                   Foreground="{StaticResource ErrorBrush}"
+                   TextWrapping="Wrap"
+                   Visibility="{Binding ElementName=parameterEditor, Path=IsValid, Converter={StaticResource InverseBooleanToVisibilityConverter}}"
+                   automation:AutomationProperties.Name="Validation Message"
+                   automation:AutomationProperties.LiveSetting="Assertive"/>
+    </Grid>
+</UserControl>
