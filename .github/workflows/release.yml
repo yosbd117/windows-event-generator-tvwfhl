@@ -1,0 +1,197 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+env:
+  DOTNET_VERSION: '6.0.x'
+  BUILD_CONFIGURATION: 'Release'
+  DOCKER_REGISTRY: ${{ secrets.DOCKER_REGISTRY }}
+  NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+  SIGNING_CERTIFICATE: ${{ secrets.SIGNING_CERTIFICATE }}
+  SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
+  RELEASE_VERSION: ${{ github.ref_name }}
+
+jobs:
+  create-release:
+    name: Create Release
+    runs-on: windows-latest
+    permissions:
+      contents: write
+      packages: write
+      
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          lfs: true
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v2
+        with:
+          buildkitd-flags: --debug
+          
+      - name: Login to Docker Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.DOCKER_REGISTRY }}
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Download Build Artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: build-artifacts
+          path: artifacts
+
+      - name: Verify Build Artifacts
+        shell: pwsh
+        run: |
+          $artifacts = Get-ChildItem -Path artifacts -Recurse
+          foreach ($artifact in $artifacts) {
+            $hash = Get-FileHash -Path $artifact.FullName -Algorithm SHA256
+            Write-Output "Verifying $($artifact.Name) - $($hash.Hash)"
+          }
+
+      - name: Create MSI Installer
+        shell: pwsh
+        run: |
+          . .\src\windows\scripts\package.ps1
+          $result = Create-MSIPackage -Version $env:RELEASE_VERSION -Configuration $env:BUILD_CONFIGURATION
+          if (-not $result) { exit 1 }
+          echo "MSI_PATH=$($result.Path)" >> $env:GITHUB_ENV
+
+      - name: Build Docker Images
+        shell: pwsh
+        run: |
+          . .\src\windows\scripts\package.ps1
+          $result = Create-DockerImages -Version $env:RELEASE_VERSION
+          if (-not $result) { exit 1 }
+          foreach ($image in $result) {
+            echo "Image built: $($image.ImageName)"
+            echo "SBOM generated: $($image.SBOM)"
+            echo "Security scan: $($image.SecurityScan)"
+          }
+
+      - name: Create NuGet Packages
+        shell: pwsh
+        run: |
+          . .\src\windows\scripts\package.ps1
+          $result = Create-NuGetPackages -Version $env:RELEASE_VERSION
+          if (-not $result) { exit 1 }
+          foreach ($package in $result) {
+            echo "Package created: $($package.Package)"
+            if ($package.Symbols) {
+              echo "Symbols package: $($package.Symbols)"
+            }
+          }
+
+      - name: Sign Release Artifacts
+        shell: pwsh
+        run: |
+          $certificate = [System.Convert]::FromBase64String($env:SIGNING_CERTIFICATE)
+          $certPath = "certificate.pfx"
+          [System.IO.File]::WriteAllBytes($certPath, $certificate)
+          
+          # Sign MSI
+          & signtool.exe sign /f $certPath /p $env:SIGNING_PASSWORD /tr http://timestamp.digicert.com /td sha256 /fd sha256 $env:MSI_PATH
+          
+          # Sign NuGet packages
+          Get-ChildItem -Path artifacts -Filter *.nupkg | ForEach-Object {
+            nuget sign $_.FullName -CertificatePath $certPath -CertificatePassword $env:SIGNING_PASSWORD -Timestamper http://timestamp.digicert.com
+          }
+          
+          Remove-Item $certPath -Force
+
+      - name: Generate Security Manifest
+        shell: pwsh
+        run: |
+          $manifest = @{
+            Version = $env:RELEASE_VERSION
+            Timestamp = (Get-Date).ToUniversalTime().ToString("o")
+            Artifacts = @{
+              MSI = @{
+                Path = $env:MSI_PATH
+                Hash = (Get-FileHash -Path $env:MSI_PATH -Algorithm SHA256).Hash
+                Signed = $true
+              }
+              Docker = $result | ConvertTo-Json
+              NuGet = Get-ChildItem -Path artifacts -Filter *.nupkg | ForEach-Object {
+                @{
+                  Path = $_.FullName
+                  Hash = (Get-FileHash -Path $_.FullName -Algorithm SHA256).Hash
+                  Signed = $true
+                }
+              }
+            }
+          }
+          $manifest | ConvertTo-Json -Depth 10 | Set-Content -Path artifacts/security-manifest.json
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            ${{ env.MSI_PATH }}
+            artifacts/*.nupkg
+            artifacts/security-manifest.json
+          body_path: artifacts/release-notes.md
+          draft: false
+          prerelease: false
+          fail_on_unmatched_files: true
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish Docker Images
+        shell: pwsh
+        run: |
+          Get-Content artifacts/docker-images.txt | ForEach-Object {
+            $image = $_
+            docker push $image
+            Write-Output "Published Docker image: $image"
+          }
+
+      - name: Publish NuGet Packages
+        shell: pwsh
+        run: |
+          Get-ChildItem -Path artifacts -Filter *.nupkg | ForEach-Object {
+            dotnet nuget push $_.FullName --api-key $env:NUGET_API_KEY --source https://api.nuget.org/v3/index.json
+            Write-Output "Published NuGet package: $($_.Name)"
+          }
+
+      - name: Verify Release
+        shell: pwsh
+        run: |
+          # Verify MSI signature
+          $signature = Get-AuthenticodeSignature -FilePath $env:MSI_PATH
+          if ($signature.Status -ne 'Valid') {
+            throw "MSI signature verification failed"
+          }
+          
+          # Verify NuGet packages
+          Get-ChildItem -Path artifacts -Filter *.nupkg | ForEach-Object {
+            $result = nuget verify -Signatures $_.FullName
+            if ($LASTEXITCODE -ne 0) {
+              throw "NuGet package signature verification failed: $($_.Name)"
+            }
+          }
+          
+          # Verify security manifest
+          $manifest = Get-Content -Path artifacts/security-manifest.json | ConvertFrom-Json
+          if (-not $manifest.Version -or -not $manifest.Timestamp) {
+            throw "Invalid security manifest"
+          }
+
+      - name: Cleanup
+        if: always()
+        shell: pwsh
+        run: |
+          # Remove sensitive files
+          Get-ChildItem -Path artifacts -Include *.pfx, *.key -Recurse | Remove-Item -Force
+          # Clear Docker credentials
+          docker logout ${{ env.DOCKER_REGISTRY }}
