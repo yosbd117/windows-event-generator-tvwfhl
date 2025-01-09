@@ -1,0 +1,151 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: event-generator-config
+  labels:
+    app: windows-event-simulator
+    component: event-generator
+data:
+  appsettings: |
+    {
+      "ApplicationName": "Windows Event Simulator",
+      "Environment": "Production",
+      "EventGeneration": {
+        "MaxConcurrentEvents": 1000,
+        "BatchSize": 100,
+        "IntervalMilliseconds": 1000,
+        "RetryAttempts": 3,
+        "RetryDelayMilliseconds": 500
+      },
+      "Performance": {
+        "EnableDetailedLogging": false,
+        "EnablePerformanceMonitoring": true,
+        "MetricsInterval": 15,
+        "HealthCheckInterval": 30
+      },
+      "Cache": {
+        "ExpirationMinutes": 30,
+        "MaxItems": 10000,
+        "EnableCompression": true
+      },
+      "Security": {
+        "UseWindowsAuthentication": false,
+        "RequireSecureChannel": true,
+        "EnableAuditLogging": true
+      }
+    }
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: template-service-config
+  labels:
+    app: windows-event-simulator
+    component: template-service
+data:
+  appsettings: |
+    {
+      "Storage": {
+        "TemplateBasePath": "/app/templates",
+        "ArchivePath": "/app/archives",
+        "MaxTemplateSize": 1048576,
+        "EnableVersioning": true
+      },
+      "Cache": {
+        "ExpirationMinutes": 30,
+        "MaxItems": 5000,
+        "EnableCompression": true
+      },
+      "Validation": {
+        "EnableSchemaValidation": true,
+        "MaxParameterCount": 50,
+        "MaxTemplateDepth": 5
+      },
+      "Performance": {
+        "EnableDetailedLogging": false,
+        "BulkOperationSize": 100
+      }
+    }
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: monitoring-config
+  labels:
+    app: windows-event-simulator
+    component: monitoring
+data:
+  appsettings: |
+    {
+      "Metrics": {
+        "Endpoint": "/metrics",
+        "Port": 9090,
+        "Path": "/metrics",
+        "ScrapeIntervalSeconds": 15
+      },
+      "Storage": {
+        "RetentionDays": 30,
+        "MaxStorageGB": 50,
+        "PurgeIntervalHours": 24
+      },
+      "Alerts": {
+        "Enable": true,
+        "Endpoints": [
+          {
+            "Type": "Email",
+            "Enabled": true
+          },
+          {
+            "Type": "WebHook",
+            "Enabled": true
+          }
+        ],
+        "Thresholds": {
+          "HighCpuPercent": 80,
+          "HighMemoryPercent": 85,
+          "EventLagSeconds": 30
+        }
+      },
+      "Logging": {
+        "Level": "Information",
+        "RetentionDays": 7,
+        "EnableStructuredLogging": true
+      }
+    }
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: database-config
+  labels:
+    app: windows-event-simulator
+    component: database
+data:
+  dbsettings: |
+    {
+      "Connection": {
+        "Server": "sql-server-service",
+        "Database": "EventSimulator",
+        "CommandTimeout": 30,
+        "MaxRetryCount": 3,
+        "RetryIntervalSeconds": 10
+      },
+      "Pool": {
+        "MaxPoolSize": 100,
+        "MinPoolSize": 10,
+        "ConnectionLifetimeSeconds": 300,
+        "ConnectionIdleTimeoutSeconds": 60
+      },
+      "Performance": {
+        "EnablePartitioning": true,
+        "PartitionInterval": "Monthly",
+        "EnableQueryStore": true,
+        "CommandTimeout": 30
+      },
+      "Maintenance": {
+        "EnableAutoShrink": false,
+        "EnableAutoUpdateStats": true,
+        "StatisticsUpdateIntervalMinutes": 120,
+        "EnableDeadlockMonitoring": true
+      }
+    }
