@@ -1,0 +1,215 @@
+{
+  "securityEventTemplates": [
+    {
+      "name": "successfulLogon",
+      "description": "An account was successfully logged on to the system",
+      "channel": "Security",
+      "eventId": 4624,
+      "level": 4,
+      "source": "Microsoft-Windows-Security-Auditing",
+      "category": "Authentication",
+      "mitreAttackTechnique": "T1078",
+      "version": "1.0.0",
+      "parameters": [
+        {
+          "name": "subjectUserSid",
+          "type": "sid",
+          "description": "SID of the account that requested the logon",
+          "required": true,
+          "validation": {
+            "pattern": "^S-1-5-21-[0-9-]+$"
+          }
+        },
+        {
+          "name": "subjectUserName",
+          "type": "string",
+          "description": "Name of the account that requested the logon",
+          "required": true,
+          "validation": {
+            "pattern": "^[a-zA-Z0-9_-]{1,20}$"
+          }
+        },
+        {
+          "name": "logonType",
+          "type": "integer",
+          "description": "Type of logon that was performed",
+          "required": true,
+          "defaultValue": "2",
+          "validation": {
+            "minimum": 2,
+            "maximum": 11
+          }
+        },
+        {
+          "name": "workstationName",
+          "type": "string",
+          "description": "Name of the workstation the logon was attempted from",
+          "required": true
+        },
+        {
+          "name": "ipAddress",
+          "type": "string",
+          "description": "IP address of the workstation",
+          "required": true,
+          "validation": {
+            "pattern": "^(?:[0-9]{1,3}\\.){3}[0-9]{1,3}$"
+          }
+        }
+      ]
+    },
+    {
+      "name": "failedLogon",
+      "description": "An account failed to log on to the system",
+      "channel": "Security",
+      "eventId": 4625,
+      "level": 3,
+      "source": "Microsoft-Windows-Security-Auditing",
+      "category": "Authentication",
+      "mitreAttackTechnique": "T1110",
+      "version": "1.0.0",
+      "parameters": [
+        {
+          "name": "targetUserName",
+          "type": "string",
+          "description": "Account name that failed to log on",
+          "required": true,
+          "validation": {
+            "pattern": "^[a-zA-Z0-9_-]{1,20}$"
+          }
+        },
+        {
+          "name": "failureReason",
+          "type": "string",
+          "description": "Reason for the logon failure",
+          "required": true
+        },
+        {
+          "name": "subStatus",
+          "type": "string",
+          "description": "Status code for the failure reason",
+          "required": true
+        },
+        {
+          "name": "workstationName",
+          "type": "string",
+          "description": "Name of the workstation the logon was attempted from",
+          "required": true
+        },
+        {
+          "name": "ipAddress",
+          "type": "string",
+          "description": "IP address of the workstation",
+          "required": true,
+          "validation": {
+            "pattern": "^(?:[0-9]{1,3}\\.){3}[0-9]{1,3}$"
+          }
+        }
+      ]
+    },
+    {
+      "name": "accountLockout",
+      "description": "A user account was locked out",
+      "channel": "Security",
+      "eventId": 4740,
+      "level": 3,
+      "source": "Microsoft-Windows-Security-Auditing",
+      "category": "Authentication",
+      "mitreAttackTechnique": "T1110",
+      "version": "1.0.0",
+      "parameters": [
+        {
+          "name": "targetUserName",
+          "type": "string",
+          "description": "Account that was locked out",
+          "required": true,
+          "validation": {
+            "pattern": "^[a-zA-Z0-9_-]{1,20}$"
+          }
+        },
+        {
+          "name": "targetDomainName",
+          "type": "string",
+          "description": "Domain of the account",
+          "required": true
+        },
+        {
+          "name": "callerComputer",
+          "type": "string",
+          "description": "Computer that caused the lockout",
+          "required": true
+        }
+      ]
+    },
+    {
+      "name": "privilegeUse",
+      "description": "A privileged service was called",
+      "channel": "Security",
+      "eventId": 4673,
+      "level": 4,
+      "source": "Microsoft-Windows-Security-Auditing",
+      "category": "PrivilegeUse",
+      "mitreAttackTechnique": "T1134",
+      "version": "1.0.0",
+      "parameters": [
+        {
+          "name": "subjectUserSid",
+          "type": "sid",
+          "description": "SID of the account using the privilege",
+          "required": true,
+          "validation": {
+            "pattern": "^S-1-5-21-[0-9-]+$"
+          }
+        },
+        {
+          "name": "subjectUserName",
+          "type": "string",
+          "description": "Name of the account using the privilege",
+          "required": true,
+          "validation": {
+            "pattern": "^[a-zA-Z0-9_-]{1,20}$"
+          }
+        },
+        {
+          "name": "privilegeList",
+          "type": "string",
+          "description": "List of privileges used",
+          "required": true
+        }
+      ]
+    },
+    {
+      "name": "processCreation",
+      "description": "A new process has been created",
+      "channel": "Security",
+      "eventId": 4688,
+      "level": 4,
+      "source": "Microsoft-Windows-Security-Auditing",
+      "category": "ProcessTracking",
+      "mitreAttackTechnique": "T1059",
+      "version": "1.0.0",
+      "parameters": [
+        {
+          "name": "newProcessName",
+          "type": "string",
+          "description": "Name of the new process",
+          "required": true
+        },
+        {
+          "name": "processId",
+          "type": "string",
+          "description": "ID of the new process",
+          "required": true,
+          "validation": {
+            "pattern": "^0x[0-9a-fA-F]+$"
+          }
+        },
+        {
+          "name": "commandLine",
+          "type": "string",
+          "description": "Command line of the new process",
+          "required": true
+        }
+      ]
+    }
+  ]
+}
