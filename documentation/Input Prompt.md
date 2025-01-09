@@ -1,0 +1,1 @@
+Build me a tool that creates Windows Events. These should be simulated events based on actual Windows events specifically around vulnerabilities.
