@@ -1,0 +1,94 @@
+<Application x:Class="EventSimulator.UI.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:sys="clr-namespace:System;assembly=mscorlib">
+    
+    <!-- Application Resources -->
+    <Application.Resources>
+        <ResourceDictionary>
+            <!-- Merge Material Design Resources -->
+            <ResourceDictionary.MergedDictionaries>
+                <!-- Material Design Theme - v4.9.0 -->
+                <materialDesign:BundledTheme BaseTheme="Light" 
+                                           PrimaryColor="Blue" 
+                                           SecondaryColor="LightBlue"/>
+                <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesignTheme.Defaults.xaml"/>
+                
+                <!-- Application Resources -->
+                <ResourceDictionary Source="Resources/Styles.xaml"/>
+                <ResourceDictionary Source="Resources/Icons.xaml"/>
+                
+                <!-- Theme Resources -->
+                <ResourceDictionary Source="Themes/Light.xaml"/>
+                <ResourceDictionary Source="Themes/Dark.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+
+            <!-- DPI Scaling Support -->
+            <sys:Double x:Key="DefaultDpiScale">96</sys:Double>
+            <sys:Double x:Key="MinimumWindowWidth">1024</sys:Double>
+            <sys:Double x:Key="MinimumWindowHeight">768</sys:Double>
+            
+            <!-- Accessibility Support -->
+            <sys:Boolean x:Key="HighContrastEnabled">False</sys:Boolean>
+            <sys:Double x:Key="MinimumTouchTarget">44</sys:Double>
+            <sys:Double x:Key="DefaultFontSize">14</sys:Double>
+            <sys:Double x:Key="LargeFontSize">16</sys:Double>
+            <sys:Double x:Key="SmallFontSize">12</sys:Double>
+            
+            <!-- Focus Visual Style -->
+            <Style x:Key="FocusVisual">
+                <Setter Property="Control.Template">
+                    <Setter.Value>
+                        <ControlTemplate>
+                            <Rectangle Margin="-2"
+                                     StrokeThickness="2"
+                                     Stroke="{DynamicResource FocusVisualBrush}"
+                                     StrokeDashArray="1 2"
+                                     SnapsToDevicePixels="true"/>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- High Contrast Theme Support -->
+            <Style x:Key="HighContrastStyle">
+                <Style.Triggers>
+                    <DataTrigger Binding="{DynamicResource HighContrastEnabled}" Value="True">
+                        <Setter Property="TextElement.Foreground" Value="{DynamicResource HighContrastForeground}"/>
+                        <Setter Property="Control.Background" Value="{DynamicResource HighContrastBackground}"/>
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+
+            <!-- Theme Switching Support -->
+            <Style x:Key="ThemeAwareStyle">
+                <Style.Triggers>
+                    <Trigger Property="materialDesign:ThemeAssist.Theme" Value="Dark">
+                        <Setter Property="TextElement.Foreground" Value="{DynamicResource PrimaryForeground}"/>
+                        <Setter Property="Background" Value="{DynamicResource PrimaryBackground}"/>
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+
+            <!-- Global Application Styles -->
+            <Style TargetType="{x:Type Window}" BasedOn="{StaticResource MaterialDesignWindow}">
+                <Setter Property="MinWidth" Value="{StaticResource MinimumWindowWidth}"/>
+                <Setter Property="MinHeight" Value="{StaticResource MinimumWindowHeight}"/>
+                <Setter Property="TextOptions.TextFormattingMode" Value="Ideal"/>
+                <Setter Property="TextOptions.TextRenderingMode" Value="Auto"/>
+                <Setter Property="UseLayoutRounding" Value="True"/>
+                <Setter Property="FocusVisualStyle" Value="{StaticResource FocusVisual}"/>
+            </Style>
+
+            <!-- Accessibility-Enhanced Control Styles -->
+            <Style TargetType="{x:Type Control}" x:Key="AccessibleControl">
+                <Setter Property="MinHeight" Value="{StaticResource MinimumTouchTarget}"/>
+                <Setter Property="MinWidth" Value="{StaticResource MinimumTouchTarget}"/>
+                <Setter Property="FontSize" Value="{StaticResource DefaultFontSize}"/>
+                <Setter Property="FocusVisualStyle" Value="{StaticResource FocusVisual}"/>
+                <Setter Property="AutomationProperties.IsRequiredForForm" Value="True"/>
+            </Style>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>
