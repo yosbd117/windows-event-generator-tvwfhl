@@ -1,0 +1,105 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: template-service
+  namespace: event-simulator
+  labels:
+    app: windows-event-simulator
+    component: template-service
+    version: 1.0.0
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: "25%"
+      maxUnavailable: "25%"
+  selector:
+    matchLabels:
+      app: windows-event-simulator
+      component: template-service
+  template:
+    metadata:
+      labels:
+        app: windows-event-simulator
+        component: template-service
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "80"
+        prometheus.io/path: "/metrics"
+    spec:
+      nodeSelector:
+        kubernetes.io/os: windows
+        kubernetes.io/arch: amd64
+      securityContext:
+        windowsOptions:
+          runAsUserName: ContainerUser
+      containers:
+      - name: template-service
+        image: mcr.microsoft.com/dotnet/aspnet:6.0-windowsservercore-ltsc2022
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: http
+          containerPort: 80
+          protocol: TCP
+        - name: metrics
+          containerPort: 9090
+          protocol: TCP
+        resources:
+          requests:
+            cpu: "2"
+            memory: "4Gi"
+          limits:
+            cpu: "4"
+            memory: "8Gi"
+        volumeMounts:
+        - name: template-storage
+          mountPath: /app/templates
+          readOnly: false
+        - name: config-volume
+          mountPath: /app/config
+          readOnly: true
+        env:
+        - name: ASPNETCORE_ENVIRONMENT
+          valueFrom:
+            configMapKeyRef:
+              name: event-simulator-config
+              key: Environment
+        - name: APPLICATION_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: event-simulator-config
+              key: ApplicationName
+        envFrom:
+        - secretRef:
+            name: template-service-secrets
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 80
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 80
+          initialDelaySeconds: 15
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        startupProbe:
+          httpGet:
+            path: /startup
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          failureThreshold: 30
+      volumes:
+      - name: template-storage
+        persistentVolumeClaim:
+          claimName: template-service-storage-pvc
+      - name: config-volume
+        configMap:
+          name: event-simulator-config
