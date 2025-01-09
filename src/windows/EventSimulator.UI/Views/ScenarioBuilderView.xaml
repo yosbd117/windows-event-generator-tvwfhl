@@ -1,0 +1,208 @@
+<UserControl 
+    x:Class="EventSimulator.UI.Views.ScenarioBuilderView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:md="http://materialdesigninxaml.net/winfx/xaml/themes"
+    xmlns:controls="clr-namespace:EventSimulator.UI.Controls"
+    xmlns:automation="clr-namespace:System.Windows.Automation;assembly=PresentationCore"
+    MinWidth="800" MinHeight="600">
+
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../Resources/Styles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Toolbar -->
+        <ToolBar Grid.Row="0" Style="{StaticResource ToolbarStyle}">
+            <Button Command="{Binding CreateScenarioCommand}"
+                    Style="{StaticResource PrimaryButtonStyle}"
+                    ToolTip="Create New Scenario"
+                    automation:AutomationProperties.Name="Create New Scenario">
+                <StackPanel Orientation="Horizontal">
+                    <Path Data="{StaticResource AddIcon}" 
+                          Fill="{StaticResource IconBrush.Light}" 
+                          Width="16" Height="16"/>
+                    <TextBlock Text="New Scenario" Margin="8,0,0,0"/>
+                </StackPanel>
+            </Button>
+
+            <Separator/>
+
+            <Button Command="{Binding SaveScenarioCommand}"
+                    Style="{StaticResource SecondaryButtonStyle}"
+                    IsEnabled="{Binding SelectedScenario, Converter={StaticResource NullToBooleanConverter}}"
+                    ToolTip="Save Scenario"
+                    automation:AutomationProperties.Name="Save Scenario">
+                <Path Data="{StaticResource TemplateIcon}" 
+                      Fill="{StaticResource IconBrush.Light}" 
+                      Width="16" Height="16"/>
+            </Button>
+
+            <Button Command="{Binding DeleteScenarioCommand}"
+                    Style="{StaticResource SecondaryButtonStyle}"
+                    IsEnabled="{Binding SelectedScenario, Converter={StaticResource NullToBooleanConverter}}"
+                    ToolTip="Delete Scenario"
+                    automation:AutomationProperties.Name="Delete Scenario">
+                <Path Data="{StaticResource DeleteIcon}" 
+                      Fill="{StaticResource IconBrush.Light}" 
+                      Width="16" Height="16"/>
+            </Button>
+
+            <Separator/>
+
+            <Button Command="{Binding ExecuteScenarioCommand}"
+                    Style="{StaticResource PrimaryButtonStyle}"
+                    IsEnabled="{Binding SelectedScenario, Converter={StaticResource NullToBooleanConverter}}"
+                    Visibility="{Binding IsExecuting, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=inverse}"
+                    ToolTip="Execute Scenario"
+                    automation:AutomationProperties.Name="Execute Scenario">
+                <Path Data="{StaticResource PlayIcon}" 
+                      Fill="{StaticResource IconBrush.Light}" 
+                      Width="16" Height="16"/>
+            </Button>
+
+            <Button Command="{Binding CancelExecutionCommand}"
+                    Style="{StaticResource SecondaryButtonStyle}"
+                    IsEnabled="{Binding IsExecuting}"
+                    Visibility="{Binding IsExecuting, Converter={StaticResource BooleanToVisibilityConverter}}"
+                    ToolTip="Stop Execution"
+                    automation:AutomationProperties.Name="Stop Execution">
+                <Path Data="{StaticResource StopIcon}" 
+                      Fill="{StaticResource IconBrush.Light}" 
+                      Width="16" Height="16"/>
+            </Button>
+        </ToolBar>
+
+        <!-- Main Content -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="250"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="300"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Scenario List -->
+            <DockPanel Grid.Column="0" Margin="8">
+                <TextBlock DockPanel.Dock="Top" 
+                         Text="Scenarios" 
+                         Style="{StaticResource MaterialDesignHeadline6TextBlock}"
+                         Margin="0,0,0,8"/>
+                
+                <ListBox ItemsSource="{Binding Scenarios}"
+                        SelectedItem="{Binding SelectedScenario}"
+                        VirtualizingPanel.IsVirtualizing="True"
+                        VirtualizingPanel.VirtualizationMode="Recycling"
+                        automation:AutomationProperties.Name="Scenario List">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Name}"
+                                     ToolTip="{Binding Description}"/>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </DockPanel>
+
+            <!-- Timeline -->
+            <controls:TimelineControl 
+                Grid.Column="1" 
+                Margin="8"
+                Events="{Binding SelectedScenario.Events}"
+                TimeScale="{Binding TimeScale}"
+                SelectedEvent="{Binding SelectedEvent, Mode=TwoWay}"
+                ZoomLevel="{Binding ZoomLevel, Mode=TwoWay}"
+                automation:AutomationProperties.Name="Event Timeline"/>
+
+            <!-- Properties Panel -->
+            <DockPanel Grid.Column="2" Margin="8">
+                <TextBlock DockPanel.Dock="Top" 
+                         Text="Properties" 
+                         Style="{StaticResource MaterialDesignHeadline6TextBlock}"
+                         Margin="0,0,0,8"/>
+
+                <ScrollViewer>
+                    <StackPanel>
+                        <!-- Event Properties -->
+                        <GroupBox Header="Event Details"
+                                 IsEnabled="{Binding SelectedEvent, Converter={StaticResource NullToBooleanConverter}}">
+                            <StackPanel Margin="8">
+                                <TextBox Text="{Binding SelectedEvent.Name, UpdateSourceTrigger=PropertyChanged}"
+                                        Style="{StaticResource TextBoxStyle}"
+                                        md:HintAssist.Hint="Event Name"
+                                        automation:AutomationProperties.Name="Event Name"/>
+
+                                <TextBox Text="{Binding SelectedEvent.Description, UpdateSourceTrigger=PropertyChanged}"
+                                        Style="{StaticResource TextBoxStyle}"
+                                        md:HintAssist.Hint="Description"
+                                        Margin="0,8,0,0"
+                                        AcceptsReturn="True"
+                                        TextWrapping="Wrap"
+                                        Height="60"
+                                        automation:AutomationProperties.Name="Event Description"/>
+
+                                <ComboBox ItemsSource="{Binding Templates}"
+                                         SelectedItem="{Binding SelectedEvent.Template}"
+                                         Style="{StaticResource ComboBoxStyle}"
+                                         md:HintAssist.Hint="Event Template"
+                                         Margin="0,8,0,0"
+                                         automation:AutomationProperties.Name="Event Template"/>
+
+                                <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                    <TextBox Text="{Binding SelectedEvent.DelayMilliseconds}"
+                                            Style="{StaticResource TextBoxStyle}"
+                                            md:HintAssist.Hint="Delay (ms)"
+                                            Width="120"
+                                            automation:AutomationProperties.Name="Event Delay"/>
+                                    
+                                    <TextBox Text="{Binding SelectedEvent.Sequence}"
+                                            Style="{StaticResource TextBoxStyle}"
+                                            md:HintAssist.Hint="Sequence"
+                                            Width="120"
+                                            Margin="8,0,0,0"
+                                            automation:AutomationProperties.Name="Event Sequence"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </GroupBox>
+
+                        <!-- Parameters -->
+                        <GroupBox Header="Parameters"
+                                 IsEnabled="{Binding SelectedEvent, Converter={StaticResource NullToBooleanConverter}}"
+                                 Margin="0,8,0,0">
+                            <ItemsControl ItemsSource="{Binding SelectedEvent.Parameters}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBox Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}"
+                                                Style="{StaticResource TextBoxStyle}"
+                                                md:HintAssist.Hint="{Binding Name}"
+                                                Margin="0,4"
+                                                automation:AutomationProperties.Name="{Binding Name}"/>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </GroupBox>
+                    </StackPanel>
+                </ScrollViewer>
+            </DockPanel>
+        </Grid>
+
+        <!-- Status Bar -->
+        <StatusBar Grid.Row="2" Style="{StaticResource StatusBarStyle}">
+            <TextBlock Text="{Binding StatusMessage}"
+                     automation:AutomationProperties.Name="Status Message"/>
+            <Separator/>
+            <ProgressBar Width="100" Height="12" 
+                        Value="{Binding ExecutionProgress}"
+                        Visibility="{Binding IsExecuting, Converter={StaticResource BooleanToVisibilityConverter}}"
+                        automation:AutomationProperties.Name="Execution Progress"/>
+        </StatusBar>
+    </Grid>
+</UserControl>
