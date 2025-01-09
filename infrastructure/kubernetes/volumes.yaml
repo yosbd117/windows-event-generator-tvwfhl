@@ -1,0 +1,120 @@
+# kubernetes v1
+---
+# PersistentVolumes for Windows Event Simulator services
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: event-generator-templates-pv
+spec:
+  storageClassName: windows-storage
+  capacity:
+    storage: 50Gi
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  mountOptions:
+    - dir_mode=0777
+    - file_mode=0777
+    - uid=1000
+    - gid=1000
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/os
+              operator: In
+              values:
+                - windows
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: event-generator-logs-pv
+spec:
+  storageClassName: windows-storage
+  capacity:
+    storage: 100Gi
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  mountOptions:
+    - dir_mode=0777
+    - file_mode=0777
+    - uid=1000
+    - gid=1000
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/os
+              operator: In
+              values:
+                - windows
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: template-service-storage-pv
+spec:
+  storageClassName: windows-storage
+  capacity:
+    storage: 25Gi
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  mountOptions:
+    - dir_mode=0777
+    - file_mode=0777
+    - uid=1000
+    - gid=1000
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/os
+              operator: In
+              values:
+                - windows
+---
+# PersistentVolumeClaims for Windows Event Simulator services
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: event-generator-templates-pvc
+  namespace: event-simulator
+spec:
+  storageClassName: windows-storage
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 50Gi
+  volumeName: event-generator-templates-pv
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: event-generator-logs-pvc
+  namespace: event-simulator
+spec:
+  storageClassName: windows-storage
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 100Gi
+  volumeName: event-generator-logs-pv
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: template-service-storage-pvc
+  namespace: event-simulator
+spec:
+  storageClassName: windows-storage
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 25Gi
+  volumeName: template-service-storage-pv
