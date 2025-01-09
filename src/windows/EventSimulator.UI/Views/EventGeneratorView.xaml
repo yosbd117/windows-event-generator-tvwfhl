@@ -1,0 +1,200 @@
+<UserControl x:Class="EventSimulator.UI.Views.EventGeneratorView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:md="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:controls="clr-namespace:EventSimulator.UI.Controls"
+             xmlns:automation="clr-namespace:System.Windows.Automation;assembly=PresentationCore"
+             x:Name="eventGeneratorView"
+             Width="Auto" Height="Auto"
+             automation:AutomationProperties.AutomationId="EventGeneratorView"
+             automation:AutomationProperties.Name="Event Generator"
+             automation:AutomationProperties.HelpText="Interface for generating Windows Event Log entries">
+
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../Resources/Styles.xaml"/>
+                <ResourceDictionary Source="../Resources/Icons.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header Section -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,16">
+            <TextBlock Text="Event Generator"
+                     Style="{StaticResource MaterialDesignHeadline5TextBlock}"
+                     automation:AutomationProperties.HeadingLevel="1"/>
+            <TextBlock Text="Generate synthetic Windows Event Log entries with comprehensive validation"
+                     Style="{StaticResource MaterialDesignBody1TextBlock}"
+                     Margin="0,4,0,0"
+                     Foreground="{StaticResource Text.Secondary}"/>
+        </StackPanel>
+
+        <!-- Main Content -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="320"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Template Selection Panel -->
+            <DockPanel Grid.Column="0" Margin="0,0,16,0">
+                <TextBlock Text="Event Templates"
+                         DockPanel.Dock="Top"
+                         Style="{StaticResource MaterialDesignSubtitle1TextBlock}"
+                         Margin="0,0,0,8"/>
+
+                <ListBox ItemsSource="{Binding Templates}"
+                        SelectedItem="{Binding SelectedTemplate}"
+                        Style="{StaticResource MaterialDesignListBox}"
+                        md:RippleAssist.IsDisabled="True"
+                        automation:AutomationProperties.Name="Event Templates List">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Margin="8">
+                                <TextBlock Text="{Binding Name}"
+                                         Style="{StaticResource MaterialDesignBody1TextBlock}"/>
+                                <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                                    <TextBlock Text="{Binding EventId}"
+                                             Style="{StaticResource MaterialDesignCaptionTextBlock}"
+                                             Foreground="{StaticResource Text.Secondary}"/>
+                                    <TextBlock Text=" | "
+                                             Style="{StaticResource MaterialDesignCaptionTextBlock}"
+                                             Foreground="{StaticResource Text.Secondary}"/>
+                                    <TextBlock Text="{Binding Channel}"
+                                             Style="{StaticResource MaterialDesignCaptionTextBlock}"
+                                             Foreground="{StaticResource Text.Secondary}"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </DockPanel>
+
+            <!-- Event Configuration Panel -->
+            <DockPanel Grid.Column="1">
+                <md:Card>
+                    <Grid Margin="16">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Template Details -->
+                        <StackPanel Grid.Row="0" Margin="0,0,0,16">
+                            <TextBlock Text="{Binding SelectedTemplate.Name}"
+                                     Style="{StaticResource MaterialDesignHeadline6TextBlock}"/>
+                            <TextBlock Text="{Binding SelectedTemplate.Description}"
+                                     Style="{StaticResource MaterialDesignBody2TextBlock}"
+                                     TextWrapping="Wrap"
+                                     Margin="0,4,0,0"/>
+                            <WrapPanel Margin="0,8,0,0">
+                                <Border Background="{StaticResource PrimaryBrush}"
+                                        CornerRadius="4"
+                                        Padding="8,4"
+                                        Margin="0,0,8,4">
+                                    <TextBlock Text="{Binding SelectedTemplate.Channel}"
+                                             Foreground="White"/>
+                                </Border>
+                                <Border Background="{StaticResource SecondaryBrush}"
+                                        CornerRadius="4"
+                                        Padding="8,4"
+                                        Margin="0,0,8,4">
+                                    <TextBlock Text="{Binding SelectedTemplate.EventId}"
+                                             Foreground="White"/>
+                                </Border>
+                                <Border Background="{StaticResource WarningBrush}"
+                                        CornerRadius="4"
+                                        Padding="8,4"
+                                        Margin="0,0,8,4"
+                                        Visibility="{Binding SelectedTemplate.MitreAttackTechnique, Converter={StaticResource StringToVisibilityConverter}}">
+                                    <TextBlock Text="{Binding SelectedTemplate.MitreAttackTechnique}"
+                                             Foreground="White"/>
+                                </Border>
+                            </WrapPanel>
+                        </StackPanel>
+
+                        <!-- Parameters -->
+                        <ScrollViewer Grid.Row="1" 
+                                    VerticalScrollBarVisibility="Auto"
+                                    HorizontalScrollBarVisibility="Disabled">
+                            <ItemsControl ItemsSource="{Binding Parameters}"
+                                        automation:AutomationProperties.Name="Event Parameters">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <controls:EventParameterEditor Parameter="{Binding}"
+                                                                     Margin="0,0,0,16"/>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+
+                        <!-- Generation Controls -->
+                        <Grid Grid.Row="2" Margin="0,16,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Batch Mode Controls -->
+                            <StackPanel Grid.Column="0" 
+                                      Orientation="Horizontal"
+                                      VerticalAlignment="Center">
+                                <CheckBox Content="Batch Mode"
+                                         IsChecked="{Binding IsBatchMode}"
+                                         Style="{StaticResource MaterialDesignCheckBox}"
+                                         VerticalAlignment="Center"
+                                         Margin="0,0,16,0"/>
+                                <TextBox Text="{Binding BatchSize}"
+                                        Width="100"
+                                        Style="{StaticResource TextBoxStyle}"
+                                        md:HintAssist.Hint="Batch Size"
+                                        IsEnabled="{Binding IsBatchMode}"
+                                        Margin="0,0,16,0"/>
+                            </StackPanel>
+
+                            <!-- Progress -->
+                            <ProgressBar Grid.Column="1"
+                                       Value="{Binding GenerationProgress}"
+                                       Style="{StaticResource MaterialDesignLinearProgressBar}"
+                                       Height="4"
+                                       Margin="0,0,16,0"
+                                       Visibility="{Binding IsGenerating, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+
+                            <!-- Action Buttons -->
+                            <StackPanel Grid.Column="2" 
+                                      Orientation="Horizontal"
+                                      HorizontalAlignment="Right">
+                                <Button Content="Cancel"
+                                        Command="{Binding CancelCommand}"
+                                        Style="{StaticResource SecondaryButtonStyle}"
+                                        Visibility="{Binding IsGenerating, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                        Margin="0,0,8,0"/>
+                                <Button Content="Generate Event"
+                                        Command="{Binding GenerateCommand}"
+                                        Style="{StaticResource PrimaryButtonStyle}"/>
+                            </StackPanel>
+                        </Grid>
+                    </Grid>
+                </md:Card>
+            </DockPanel>
+        </Grid>
+
+        <!-- Status Bar -->
+        <StatusBar Grid.Row="2" 
+                  Style="{StaticResource StatusBarStyle}"
+                  Margin="0,16,0,0">
+            <TextBlock Text="{Binding StatusMessage}"
+                     Style="{StaticResource MaterialDesignBody2TextBlock}"/>
+        </StatusBar>
+    </Grid>
+</UserControl>
