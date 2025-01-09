@@ -1,0 +1,83 @@
+<ResourceDictionary 
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes">
+    <!-- MaterialDesignThemes.Wpf v4.9.0 -->
+
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="../Resources/Styles.xaml"/>
+    </ResourceDictionary.MergedDictionaries>
+
+    <!-- Primary Background Colors -->
+    <SolidColorBrush x:Key="PrimaryBackground" Color="#1E1E1E"/>
+    <SolidColorBrush x:Key="SecondaryBackground" Color="#252526"/>
+    <SolidColorBrush x:Key="TertiaryBackground" Color="#2D2D2D"/>
+
+    <!-- Foreground Colors with WCAG 2.1 Level AA compliant contrast ratios -->
+    <SolidColorBrush x:Key="PrimaryForeground" Color="#FFFFFF"/> <!-- 7:1 contrast ratio -->
+    <SolidColorBrush x:Key="SecondaryForeground" Color="#B3B3B3"/> <!-- 4.5:1 contrast ratio -->
+
+    <!-- Accent Colors -->
+    <SolidColorBrush x:Key="AccentPrimary" Color="#007ACC"/>
+    <SolidColorBrush x:Key="AccentSecondary" Color="#0098FF"/>
+
+    <!-- Status Colors with minimum 4.5:1 contrast ratio -->
+    <SolidColorBrush x:Key="ErrorColor" Color="#FF3333"/>
+    <SolidColorBrush x:Key="WarningColor" Color="#FF8C00"/>
+    <SolidColorBrush x:Key="SuccessColor" Color="#00CC66"/>
+
+    <!-- UI Element Colors -->
+    <SolidColorBrush x:Key="BorderBrush" Color="#404040"/>
+    <SolidColorBrush x:Key="SeparatorBrush" Color="#333333"/>
+    <SolidColorBrush x:Key="FocusIndicator" Color="#FF00FF"/> <!-- High visibility for keyboard navigation -->
+
+    <!-- High Contrast Support -->
+    <SolidColorBrush x:Key="HighContrastBackground" Color="#000000"/>
+    <SolidColorBrush x:Key="HighContrastForeground" Color="#FFFFFF"/>
+
+    <!-- Material Design Theme Overrides -->
+    <SolidColorBrush x:Key="MaterialDesignBackground" Color="{Binding Color, Source={StaticResource PrimaryBackground}}"/>
+    <SolidColorBrush x:Key="MaterialDesignPaper" Color="{Binding Color, Source={StaticResource SecondaryBackground}}"/>
+    <SolidColorBrush x:Key="MaterialDesignBody" Color="{Binding Color, Source={StaticResource PrimaryForeground}}"/>
+    <SolidColorBrush x:Key="MaterialDesignBodyLight" Color="{Binding Color, Source={StaticResource SecondaryForeground}}"/>
+
+    <!-- Control-Specific Theme Colors -->
+    <SolidColorBrush x:Key="DataGrid.HeaderBackground" Color="#333333"/>
+    <SolidColorBrush x:Key="DataGrid.AlternatingRowBackground" Color="#2A2A2A"/>
+    <SolidColorBrush x:Key="TextBox.BackgroundFocused" Color="#1F1F1F"/>
+    <SolidColorBrush x:Key="ComboBox.PopupBackground" Color="#2D2D2D"/>
+    <SolidColorBrush x:Key="ScrollBar.Background" Color="#3E3E3E"/>
+    <SolidColorBrush x:Key="ScrollBar.Thumb" Color="#686868"/>
+
+    <!-- Disabled State Colors -->
+    <SolidColorBrush x:Key="DisabledBackground" Color="#2D2D2D"/>
+    <SolidColorBrush x:Key="DisabledForeground" Color="#666666"/>
+    <SolidColorBrush x:Key="DisabledBorder" Color="#404040"/>
+
+    <!-- Selection Colors -->
+    <SolidColorBrush x:Key="Selection.Background" Color="#264F78"/>
+    <SolidColorBrush x:Key="Selection.Inactive" Color="#3F3F46"/>
+    <SolidColorBrush x:Key="Selection.Border" Color="#007ACC"/>
+
+    <!-- Hover State Colors -->
+    <SolidColorBrush x:Key="Item.MouseOver.Background" Color="#2D2D30"/>
+    <SolidColorBrush x:Key="Item.MouseOver.Border" Color="#007ACC"/>
+
+    <!-- Focus State Colors -->
+    <SolidColorBrush x:Key="Item.Focus.Background" Color="#2D2D30"/>
+    <SolidColorBrush x:Key="Item.Focus.Border" Color="#007ACC"/>
+
+    <!-- Shadow Effects -->
+    <DropShadowEffect x:Key="ControlShadow" 
+                      BlurRadius="10" 
+                      ShadowDepth="2" 
+                      Direction="270" 
+                      Color="#000000" 
+                      Opacity="0.25"/>
+
+    <!-- Opacity Values -->
+    <sys:Double x:Key="DisabledOpacity">0.5</sys:Double>
+    <sys:Double x:Key="HoverOpacity">0.8</sys:Double>
+    <sys:Double x:Key="PressedOpacity">0.6</sys:Double>
+
+</ResourceDictionary>
