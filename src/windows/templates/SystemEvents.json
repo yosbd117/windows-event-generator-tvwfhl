@@ -1,0 +1,249 @@
+{
+  "version": "1.0.0",
+  "templates": [
+    {
+      "name": "serviceStartTemplate",
+      "eventId": 7000,
+      "channel": "System",
+      "level": 4,
+      "source": "Service Control Manager",
+      "description": "A service was started successfully",
+      "mitreReference": "T1543",
+      "parameters": [
+        {
+          "name": "serviceName",
+          "type": "string",
+          "required": true,
+          "validation": {
+            "pattern": "^[A-Za-z0-9\\-_\\.]+$",
+            "minLength": 1,
+            "maxLength": 256
+          }
+        },
+        {
+          "name": "serviceType",
+          "type": "string",
+          "required": true,
+          "validation": {
+            "allowedValues": ["kernel", "filesystem", "win32", "win32_share"]
+          }
+        }
+      ],
+      "xmlTemplate": {
+        "schema": "1.0",
+        "template": "<Event xmlns='http://schemas.microsoft.com/win/2004/08/events/event'><System><Provider Name='Service Control Manager'/><EventID>7000</EventID><Level>4</Level><Task>0</Task><Keywords>0x8080000000000000</Keywords><TimeCreated SystemTime='%TimeCreated%'/><EventRecordID>%EventRecordID%</EventRecordID><Channel>System</Channel><Computer>%ComputerName%</Computer></System><EventData><Data Name='ServiceName'>%serviceName%</Data><Data Name='ServiceType'>%serviceType%</Data></EventData></Event>",
+        "validation": {
+          "requiredNodes": ["System", "EventData"],
+          "schemaValidation": true
+        }
+      },
+      "correlationRules": [
+        {
+          "relatedEventId": 7001,
+          "relationship": "precedes",
+          "timeWindow": 3600,
+          "conditions": ["serviceName matches"]
+        }
+      ]
+    },
+    {
+      "name": "serviceStopTemplate",
+      "eventId": 7001,
+      "channel": "System",
+      "level": 4,
+      "source": "Service Control Manager",
+      "description": "A service was stopped",
+      "mitreReference": "T1543",
+      "parameters": [
+        {
+          "name": "serviceName",
+          "type": "string",
+          "required": true,
+          "validation": {
+            "pattern": "^[A-Za-z0-9\\-_\\.]+$",
+            "minLength": 1,
+            "maxLength": 256
+          }
+        }
+      ],
+      "xmlTemplate": {
+        "schema": "1.0",
+        "template": "<Event xmlns='http://schemas.microsoft.com/win/2004/08/events/event'><System><Provider Name='Service Control Manager'/><EventID>7001</EventID><Level>4</Level><Task>0</Task><Keywords>0x8080000000000000</Keywords><TimeCreated SystemTime='%TimeCreated%'/><EventRecordID>%EventRecordID%</EventRecordID><Channel>System</Channel><Computer>%ComputerName%</Computer></System><EventData><Data Name='ServiceName'>%serviceName%</Data></EventData></Event>",
+        "validation": {
+          "requiredNodes": ["System", "EventData"],
+          "schemaValidation": true
+        }
+      }
+    },
+    {
+      "name": "serviceCrashTemplate",
+      "eventId": 7031,
+      "channel": "System",
+      "level": 2,
+      "source": "Service Control Manager",
+      "description": "Service terminated unexpectedly",
+      "mitreReference": "T1529",
+      "parameters": [
+        {
+          "name": "serviceName",
+          "type": "string",
+          "required": true,
+          "validation": {
+            "pattern": "^[A-Za-z0-9\\-_\\.]+$",
+            "minLength": 1,
+            "maxLength": 256
+          }
+        },
+        {
+          "name": "exitCode",
+          "type": "number",
+          "required": true,
+          "validation": {
+            "min": -2147483648,
+            "max": 2147483647
+          }
+        }
+      ],
+      "xmlTemplate": {
+        "schema": "1.0",
+        "template": "<Event xmlns='http://schemas.microsoft.com/win/2004/08/events/event'><System><Provider Name='Service Control Manager'/><EventID>7031</EventID><Level>2</Level><Task>0</Task><Keywords>0x8080000000000000</Keywords><TimeCreated SystemTime='%TimeCreated%'/><EventRecordID>%EventRecordID%</EventRecordID><Channel>System</Channel><Computer>%ComputerName%</Computer></System><EventData><Data Name='ServiceName'>%serviceName%</Data><Data Name='ExitCode'>%exitCode%</Data></EventData></Event>",
+        "validation": {
+          "requiredNodes": ["System", "EventData"],
+          "schemaValidation": true
+        }
+      }
+    },
+    {
+      "name": "systemStartupTemplate",
+      "eventId": 6005,
+      "channel": "System",
+      "level": 4,
+      "source": "EventLog",
+      "description": "The Event log service was started",
+      "mitreReference": "T1529",
+      "parameters": [],
+      "xmlTemplate": {
+        "schema": "1.0",
+        "template": "<Event xmlns='http://schemas.microsoft.com/win/2004/08/events/event'><System><Provider Name='EventLog'/><EventID>6005</EventID><Level>4</Level><Task>0</Task><Keywords>0x8080000000000000</Keywords><TimeCreated SystemTime='%TimeCreated%'/><EventRecordID>%EventRecordID%</EventRecordID><Channel>System</Channel><Computer>%ComputerName%</Computer></System><EventData></EventData></Event>",
+        "validation": {
+          "requiredNodes": ["System"],
+          "schemaValidation": true
+        }
+      }
+    },
+    {
+      "name": "diskErrorTemplate",
+      "eventId": 7,
+      "channel": "System",
+      "level": 2,
+      "source": "disk",
+      "description": "Physical disk error detected",
+      "mitreReference": "T1499",
+      "parameters": [
+        {
+          "name": "diskNumber",
+          "type": "number",
+          "required": true,
+          "validation": {
+            "min": 0,
+            "max": 99
+          }
+        },
+        {
+          "name": "errorCode",
+          "type": "string",
+          "required": true,
+          "validation": {
+            "pattern": "^0x[0-9A-Fa-f]{8}$"
+          }
+        }
+      ],
+      "xmlTemplate": {
+        "schema": "1.0",
+        "template": "<Event xmlns='http://schemas.microsoft.com/win/2004/08/events/event'><System><Provider Name='disk'/><EventID>7</EventID><Level>2</Level><Task>0</Task><Keywords>0x8080000000000000</Keywords><TimeCreated SystemTime='%TimeCreated%'/><EventRecordID>%EventRecordID%</EventRecordID><Channel>System</Channel><Computer>%ComputerName%</Computer></System><EventData><Data Name='DiskNumber'>%diskNumber%</Data><Data Name='ErrorCode'>%errorCode%</Data></EventData></Event>",
+        "validation": {
+          "requiredNodes": ["System", "EventData"],
+          "schemaValidation": true
+        }
+      }
+    },
+    {
+      "name": "networkErrorTemplate",
+      "eventId": 4201,
+      "channel": "System",
+      "level": 2,
+      "source": "Tcpip",
+      "description": "Network connectivity lost",
+      "mitreReference": "T1110",
+      "parameters": [
+        {
+          "name": "interfaceGuid",
+          "type": "string",
+          "required": true,
+          "validation": {
+            "pattern": "^\\{[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}\\}$"
+          }
+        }
+      ],
+      "xmlTemplate": {
+        "schema": "1.0",
+        "template": "<Event xmlns='http://schemas.microsoft.com/win/2004/08/events/event'><System><Provider Name='Tcpip'/><EventID>4201</EventID><Level>2</Level><Task>0</Task><Keywords>0x8080000000000000</Keywords><TimeCreated SystemTime='%TimeCreated%'/><EventRecordID>%EventRecordID%</EventRecordID><Channel>System</Channel><Computer>%ComputerName%</Computer></System><EventData><Data Name='InterfaceGuid'>%interfaceGuid%</Data></EventData></Event>",
+        "validation": {
+          "requiredNodes": ["System", "EventData"],
+          "schemaValidation": true
+        }
+      }
+    },
+    {
+      "name": "driverLoadTemplate",
+      "eventId": 10,
+      "channel": "System",
+      "level": 4,
+      "source": "Microsoft-Windows-DriverFrameworks-UserMode",
+      "description": "Driver loaded successfully",
+      "mitreReference": "T1543.003",
+      "parameters": [
+        {
+          "name": "driverName",
+          "type": "string",
+          "required": true,
+          "validation": {
+            "pattern": "^[A-Za-z0-9\\-_\\.]+\\.sys$",
+            "minLength": 5,
+            "maxLength": 256
+          }
+        }
+      ],
+      "xmlTemplate": {
+        "schema": "1.0",
+        "template": "<Event xmlns='http://schemas.microsoft.com/win/2004/08/events/event'><System><Provider Name='Microsoft-Windows-DriverFrameworks-UserMode'/><EventID>10</EventID><Level>4</Level><Task>0</Task><Keywords>0x8080000000000000</Keywords><TimeCreated SystemTime='%TimeCreated%'/><EventRecordID>%EventRecordID%</EventRecordID><Channel>System</Channel><Computer>%ComputerName%</Computer></System><EventData><Data Name='DriverName'>%driverName%</Data></EventData></Event>",
+        "validation": {
+          "requiredNodes": ["System", "EventData"],
+          "schemaValidation": true
+        }
+      }
+    }
+  ],
+  "validationRules": [
+    {
+      "rule": "EventID must match SystemEventIds constant values",
+      "severity": "error",
+      "errorMessage": "Invalid Event ID specified"
+    },
+    {
+      "rule": "Channel must match EventLogChannels constant values",
+      "severity": "error",
+      "errorMessage": "Invalid Event Log Channel specified"
+    },
+    {
+      "rule": "Level must match EventLogLevels constant values",
+      "severity": "error",
+      "errorMessage": "Invalid Event Level specified"
+    },
+    {
+      "rule": "XML template must conform to Windows Event schema",
+      "severity": "error",
+      "errorMessage": "Invalid XML template structure"
+    }
+  ]
+}
